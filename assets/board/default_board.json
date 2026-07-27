@@ -1,0 +1,42 @@
+{
+  "speechRate": 0.45,
+  "categories": [
+    {"id": "wants", "names": {"en": "Wants"}, "cards": [
+      {"id": "eat", "labels": {"en": "eat"}, "symbolAsset": "assets/symbols/eat.svg"},
+      {"id": "drink", "labels": {"en": "drink"}, "symbolAsset": "assets/symbols/drink.svg"},
+      {"id": "water", "labels": {"en": "water"}, "symbolAsset": "assets/symbols/water.svg"},
+      {"id": "snack", "labels": {"en": "snack"}, "symbolAsset": "assets/symbols/snack.svg"},
+      {"id": "more", "labels": {"en": "more"}, "symbolAsset": "assets/symbols/more.svg"},
+      {"id": "all-done", "labels": {"en": "all done"}, "symbolAsset": "assets/symbols/all-done.svg"}
+    ]},
+    {"id": "body", "names": {"en": "Body"}, "cards": [
+      {"id": "toilet", "labels": {"en": "toilet"}, "symbolAsset": "assets/symbols/toilet.svg"},
+      {"id": "wash-hands", "labels": {"en": "wash hands"}, "symbolAsset": "assets/symbols/wash-hands.svg"},
+      {"id": "hurts", "labels": {"en": "it hurts"}, "symbolAsset": "assets/symbols/hurts.svg"},
+      {"id": "tired", "labels": {"en": "tired"}, "symbolAsset": "assets/symbols/tired.svg"},
+      {"id": "sick", "labels": {"en": "I feel sick"}, "symbolAsset": "assets/symbols/sick.svg"}
+    ]},
+    {"id": "play", "names": {"en": "Play"}, "cards": [
+      {"id": "play", "labels": {"en": "play"}, "symbolAsset": "assets/symbols/play.svg"},
+      {"id": "outside", "labels": {"en": "outside"}, "symbolAsset": "assets/symbols/outside.svg"},
+      {"id": "ball", "labels": {"en": "ball"}, "symbolAsset": "assets/symbols/ball.svg"},
+      {"id": "book", "labels": {"en": "book"}, "symbolAsset": "assets/symbols/book.svg"},
+      {"id": "music", "labels": {"en": "music"}, "symbolAsset": "assets/symbols/music.svg"},
+      {"id": "tv", "labels": {"en": "TV"}, "symbolAsset": "assets/symbols/tv.svg"},
+      {"id": "bubbles", "labels": {"en": "bubbles"}, "symbolAsset": "assets/symbols/bubbles.svg"}
+    ]},
+    {"id": "feelings", "names": {"en": "Feelings"}, "cards": [
+      {"id": "happy", "labels": {"en": "happy"}, "symbolAsset": "assets/symbols/happy.svg"},
+      {"id": "sad", "labels": {"en": "sad"}, "symbolAsset": "assets/symbols/sad.svg"},
+      {"id": "angry", "labels": {"en": "angry"}, "symbolAsset": "assets/symbols/angry.svg"},
+      {"id": "scared", "labels": {"en": "scared"}, "symbolAsset": "assets/symbols/scared.svg"},
+      {"id": "love", "labels": {"en": "I love you"}, "symbolAsset": "assets/symbols/love.svg"}
+    ]},
+    {"id": "help", "names": {"en": "Help"}, "cards": [
+      {"id": "help", "labels": {"en": "help me"}, "symbolAsset": "assets/symbols/help.svg"},
+      {"id": "come-here", "labels": {"en": "come here"}, "symbolAsset": "assets/symbols/come-here.svg"},
+      {"id": "hug", "labels": {"en": "hug"}, "symbolAsset": "assets/symbols/hug.svg"},
+      {"id": "stop", "labels": {"en": "stop"}, "symbolAsset": "assets/symbols/stop.svg"}
+    ]}
+  ]
+}
