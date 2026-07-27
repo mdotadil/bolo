@@ -29,6 +29,7 @@ Rejected for v1: sentence-strip AAC (build it when the child chains symbols), ph
 ### Child screen (the whole app, 95% of the time)
 
 - Grid of large symbol cards, 2–3 columns on a phone. Tap a card → the word is spoken immediately.
+- Phone-first, tablet-ready: layouts scale column count with screen width, but the phone experience is the one that must be excellent (target families own phones, not iPads).
 - Gentle visual confirmation on tap (brief highlight). No bounce, no sound effects, no celebration animations.
 - Categories as large tabs along the bottom:
   - **Wants** — eat, drink, more, all done
