@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../models/board.dart';
+import '../../services/backup_service.dart';
 import '../board/board_providers.dart';
 import 'add_card_sheet.dart';
 import 'insights_section.dart';
@@ -191,6 +194,35 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
               padding: EdgeInsetsDirectional.symmetric(horizontal: 12),
               child: InsightsSection(),
             ),
+            Padding(
+              padding: const EdgeInsetsDirectional.all(12),
+              child: Row(children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('backup-button'),
+                    icon: const Icon(Icons.ios_share),
+                    label: const Text('Backup'),
+                    onPressed: () async {
+                      final docs = ref.read(docsDirProvider);
+                      await ref.read(usageStoreProvider).flush();
+                      final file =
+                          await BackupService(docs).createBackup();
+                      await SharePlus.instance.share(
+                          ShareParams(files: [XFile(file.path)]));
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    key: const ValueKey('restore-button'),
+                    icon: const Icon(Icons.download_outlined),
+                    label: const Text('Restore'),
+                    onPressed: () => _restoreFlow(context),
+                  ),
+                ),
+              ]),
+            ),
           ]);
         },
       ),
@@ -229,5 +261,38 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
     }
     if (card.symbolAsset != null) return SvgPicture.asset(card.symbolAsset!);
     return const SizedBox.shrink();
+  }
+
+  Future<void> _restoreFlow(BuildContext context) async {
+    const typeGroup = XTypeGroup(label: 'Bolo backup', extensions: ['bolo']);
+    final picked = await openFile(acceptedTypeGroups: [typeGroup]);
+    if (picked == null || !context.mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        key: const ValueKey('restore-confirm'),
+        title: const Text('Restore backup?'),
+        content: Text(
+            'This replaces the current board, photos, and recordings with the backup "${picked.name}". This cannot be undone.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Restore')),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await BackupService(ref.read(docsDirProvider))
+          .restore(File(picked.path));
+      ref.invalidate(boardNotifierProvider); // reload from disk
+    } on FormatException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 }
