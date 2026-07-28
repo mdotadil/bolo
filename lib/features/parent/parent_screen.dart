@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/board.dart';
 import '../board/board_providers.dart';
+import 'add_card_sheet.dart';
 
 class ParentScreen extends ConsumerStatefulWidget {
   const ParentScreen({super.key});
@@ -44,7 +45,8 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                 ),
                 const SizedBox(width: 12),
                 FilledButton.icon(
-                  onPressed: null, // wired in Task 11
+                  onPressed: () =>
+                      showAddCardSheet(context, ref, category.id),
                   icon: const Icon(Icons.add),
                   label: const Text('Add card'),
                 ),
