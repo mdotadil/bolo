@@ -39,6 +39,10 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
   String? _recordingLang;
   int _elapsed = 0;
   Timer? _ticker;
+  // Cached at the moment recording starts so a hot mic can be stopped from
+  // dispose() without touching `ref` (unsafe once the widget is unmounted).
+  Recorder? _activeRecorder;
+  String? _activeTmpPath;
   late final TextEditingController _en;
   late final TextEditingController _ur;
 
@@ -53,10 +57,38 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
 
   @override
   void dispose() {
-    _ticker?.cancel();
+    // Dismissal via barrier tap / swipe-down never runs rec-close's handler,
+    // so this is the only place that catches those routes. Fire-and-forget:
+    // dispose() can't be async, and by now `ref`/`context` are unsafe to
+    // touch, which is exactly why the cached _activeRecorder/_activeTmpPath
+    // fields (not ref.read) drive the cleanup.
+    unawaited(_cancelActiveRecording());
     _en.dispose();
     _ur.dispose();
     super.dispose();
+  }
+
+  /// Stops a mic left running when the sheet closes by any route other than
+  /// an explicit save. Cancels the ticker, stops the recorder, best-effort
+  /// deletes the orphaned .tmp file, and deliberately never calls
+  /// setRecording — close-while-recording is a cancel, not a save. Safe to
+  /// call with nothing active (no-op) and safe to call from dispose() since
+  /// it never touches `ref`, `context`, or setState.
+  Future<void> _cancelActiveRecording() async {
+    _ticker?.cancel();
+    final lang = _recordingLang;
+    final recorder = _activeRecorder;
+    final cachedTmpPath = _activeTmpPath;
+    _recordingLang = null;
+    _activeRecorder = null;
+    _activeTmpPath = null;
+    if (lang == null || recorder == null) return;
+    final stoppedPath = await recorder.stop();
+    final tmpPath = stoppedPath ?? cachedTmpPath;
+    if (tmpPath == null) return;
+    try {
+      File(tmpPath).deleteSync();
+    } catch (_) {} // already gone / never created — nothing to clean up
   }
 
   /// The live card from the provider, so recording changes render immediately.
@@ -79,6 +111,8 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
     final tmpPath = '${docs.path}/recordings/${widget.card.id}_$lang.m4a.tmp';
     await recorder.start(tmpPath);
     if (!mounted) return;
+    _activeRecorder = recorder;
+    _activeTmpPath = tmpPath;
     setState(() {
       _recordingLang = lang;
       _elapsed = 0;
@@ -92,8 +126,10 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
 
   Future<void> _stop(String lang) async {
     _ticker?.cancel();
-    final recorder = ref.read(recorderProvider);
+    final Recorder recorder = _activeRecorder ?? ref.read(recorderProvider);
     final tmpPath = await recorder.stop();
+    _activeRecorder = null;
+    _activeTmpPath = null;
     if (!mounted) return;
     setState(() => _recordingLang = null);
     if (tmpPath == null) return;
@@ -146,7 +182,10 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
           IconButton(
             key: const ValueKey('rec-close'),
             icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () async {
+              await _cancelActiveRecording();
+              if (context.mounted) Navigator.of(context).pop();
+            },
           ),
         ]),
         for (final lang in supportedLanguages)
@@ -206,6 +245,7 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
             child: FilledButton(
               key: const ValueKey('rec-save-labels'),
               onPressed: () async {
+                await _cancelActiveRecording();
                 await ref
                     .read(boardNotifierProvider.notifier)
                     .setCustomLabels(widget.card.id, en: _en.text, ur: _ur.text);

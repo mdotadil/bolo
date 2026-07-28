@@ -11,6 +11,19 @@ import 'package:bolo/services/board_store.dart';
 import 'package:bolo/services/recording_player.dart';
 import '../support/fakes.dart';
 
+/// Real recorders create the file at `path` the instant recording starts;
+/// the shared `FakeRecorder` deliberately does no I/O at all (so unrelated
+/// callers like recording_player_test.dart stay side-effect free). This
+/// subclass adds that one behavior locally, only for the tests here that
+/// exercise the tmp-then-rename / orphaned-tmp-file-cleanup flow end to end.
+class _FileCreatingRecorder extends FakeRecorder {
+  @override
+  Future<void> start(String path) async {
+    File(path).createSync(recursive: true);
+    await super.start(path);
+  }
+}
+
 void main() {
   late Directory tmp;
   late FakeRecorder fakeRecorder;
@@ -18,7 +31,7 @@ void main() {
 
   setUp(() {
     tmp = Directory.systemTemp.createTempSync('bolo_record');
-    fakeRecorder = FakeRecorder();
+    fakeRecorder = _FileCreatingRecorder();
     fakePlayer = FakePlayer();
   });
   tearDown(() => tmp.deleteSync(recursive: true));
@@ -134,5 +147,36 @@ void main() {
     final custom =
         board.categories.first.cards.firstWhere((c) => c.id == 'custom-1');
     expect(custom.labels['ur'], 'کمبل');
+  });
+
+  testWidgets(
+      'dismissing the sheet via the barrier while recording stops the mic, '
+      'deletes the orphaned tmp file, and leaves the card unchanged',
+      (tester) async {
+    await pumpParent(tester);
+    await tester.tap(find.byKey(const ValueKey('mic-eat')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rec-start-ur')));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('rec-stop-ur')), findsOneWidget);
+
+    // Dismiss via the modal barrier (tap outside the sheet) -- not rec-close
+    // -- the route that used to leak the mic because dispose() never
+    // stopped the recorder.
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pumpAndSettle();
+
+    expect(fakeRecorder.isRecording, isFalse);
+    final recordingsDir = Directory('${tmp.path}/recordings');
+    final leftoverTmp = recordingsDir.existsSync()
+        ? recordingsDir
+            .listSync()
+            .where((f) => f.path.endsWith('.tmp'))
+            .toList()
+        : const <FileSystemEntity>[];
+    expect(leftoverTmp, isEmpty);
+    final board = readBoard(tester);
+    final eat = board.categories.first.cards.firstWhere((c) => c.id == 'eat');
+    expect(eat.recordings, isEmpty);
   });
 }
