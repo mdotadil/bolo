@@ -61,4 +61,18 @@ void main() {
         tester.widget<Slider>(find.byKey(const ValueKey('rate-slider')));
     expect(slider.value, 0.45);
   });
+
+  testWidgets('toggle updates board state immediately', (tester) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    // Tap the switch to toggle visibility
+    await tester.tap(find.byKey(const ValueKey('switch-eat')));
+    await tester.pump();
+    // Verify the board state was updated in memory
+    final ctx = tester.element(find.byType(ParentScreen));
+    final board = ProviderScope.containerOf(ctx)
+        .read(boardNotifierProvider).value!;
+    expect(board.categories.single.cards.first.hidden, isTrue);
+  });
+
 }

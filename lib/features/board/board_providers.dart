@@ -54,7 +54,7 @@ class BoardNotifier extends AsyncNotifier<Board> {
 
   List<SymbolCard> _moved(List<SymbolCard> cards, int oldIndex, int newIndex) {
     final list = [...cards];
-    if (newIndex > oldIndex) newIndex -= 1; // ReorderableListView convention
+    // onReorderItem already adjusts newIndex for the removed item, no decrement needed
     list.insert(newIndex, list.removeAt(oldIndex));
     return list;
   }

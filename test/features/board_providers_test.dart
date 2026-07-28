@@ -10,6 +10,12 @@ const _defaultJson =
     '{"id":"eat","labels":{"en":"eat"},"symbolAsset":"assets/symbols/eat.svg"},'
     '{"id":"drink","labels":{"en":"drink"},"symbolAsset":"assets/symbols/drink.svg"}]}]}';
 
+const _threeCardJson =
+    '{"speechRate":0.45,"categories":[{"id":"wants","names":{"en":"Wants"},"cards":['
+    '{"id":"a","labels":{"en":"a"},"symbolAsset":"assets/symbols/eat.svg"},'
+    '{"id":"b","labels":{"en":"b"},"symbolAsset":"assets/symbols/drink.svg"},'
+    '{"id":"c","labels":{"en":"c"},"symbolAsset":"assets/symbols/drink.svg"}]}]}';
+
 class FakeTts implements Tts {
   final calls = <String>[];
   @override
@@ -58,12 +64,43 @@ void main() {
     expect(reloaded.categories.single.cards.first.hidden, isTrue);
   });
 
-  test('reorderCard moves a card within its category', () async {
+  test('reorderCard moves a card within its category (down)', () async {
     await container.read(boardNotifierProvider.future);
-    await container.read(boardNotifierProvider.notifier).reorderCard('wants', 0, 2);
+    // onReorderItem passes adjusted newIndex: drag 0 down past 1 → newIndex=1
+    await container.read(boardNotifierProvider.notifier).reorderCard('wants', 0, 1);
     final ids = container.read(boardNotifierProvider).value!
         .categories.single.cards.map((c) => c.id).toList();
     expect(ids, ['drink', 'eat']);
+  });
+
+  test('reorderCard moves a card up within its category', () async {
+    final threeContainer = ProviderContainer(overrides: [
+      boardStoreProvider.overrideWithValue(
+          BoardStore(tmp, loadDefault: () async => _threeCardJson)),
+      ttsProvider.overrideWithValue(tts),
+    ]);
+    await threeContainer.read(boardNotifierProvider.future);
+    // Starting with [a, b, c], move c up to position 0
+    await threeContainer.read(boardNotifierProvider.notifier).reorderCard('wants', 2, 0);
+    final ids = threeContainer.read(boardNotifierProvider).value!
+        .categories.single.cards.map((c) => c.id).toList();
+    expect(ids, ['c', 'a', 'b']);
+    threeContainer.dispose();
+  });
+
+  test('reorderCard moves a card down past two others', () async {
+    final threeContainer = ProviderContainer(overrides: [
+      boardStoreProvider.overrideWithValue(
+          BoardStore(tmp, loadDefault: () async => _threeCardJson)),
+      ttsProvider.overrideWithValue(tts),
+    ]);
+    await threeContainer.read(boardNotifierProvider.future);
+    // Starting with [a, b, c], move a down to the end → newIndex=2 (end of list after removal)
+    await threeContainer.read(boardNotifierProvider.notifier).reorderCard('wants', 0, 2);
+    final ids = threeContainer.read(boardNotifierProvider).value!
+        .categories.single.cards.map((c) => c.id).toList();
+    expect(ids, ['b', 'c', 'a']);
+    threeContainer.dispose();
   });
 
   test('addCustomCard appends a photo card', () async {

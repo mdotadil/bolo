@@ -13,6 +13,7 @@ class ParentScreen extends ConsumerStatefulWidget {
 
 class _ParentScreenState extends ConsumerState<ParentScreen> {
   int _categoryIndex = 0;
+  double? _pendingRate;
 
   @override
   Widget build(BuildContext context) {
@@ -78,12 +79,16 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                 Expanded(
                   child: Slider(
                     key: const ValueKey('rate-slider'),
-                    value: board.speechRate,
+                    value: _pendingRate ?? board.speechRate,
                     min: 0.3,
                     max: 0.7,
-                    onChanged: (v) => ref
-                        .read(boardNotifierProvider.notifier)
-                        .setSpeechRate(v),
+                    onChanged: (v) => setState(() => _pendingRate = v),
+                    onChangeEnd: (v) async {
+                      await ref
+                          .read(boardNotifierProvider.notifier)
+                          .setSpeechRate(v);
+                      setState(() => _pendingRate = null);
+                    },
                   ),
                 ),
               ]),
