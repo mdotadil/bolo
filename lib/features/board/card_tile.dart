@@ -5,9 +5,14 @@ import '../../models/board.dart';
 import '../../theme.dart';
 
 class CardTile extends StatefulWidget {
-  const CardTile({super.key, required this.card, required this.onTap});
+  const CardTile(
+      {super.key,
+      required this.card,
+      required this.onTap,
+      required this.language});
   final SymbolCard card;
   final VoidCallback onTap;
+  final String language;
 
   @override
   State<CardTile> createState() => _CardTileState();
@@ -18,7 +23,7 @@ class _CardTileState extends State<CardTile> {
 
   @override
   Widget build(BuildContext context) {
-    final label = widget.card.labels['en'] ?? '';
+    final label = widget.card.labels[widget.language] ?? widget.card.labels['en'] ?? '';
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapCancel: () => setState(() => _pressed = false),
