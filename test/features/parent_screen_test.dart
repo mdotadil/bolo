@@ -63,69 +63,72 @@ void main() {
     expect(slider.value, 0.45);
   });
 
-  testWidgets('toggle updates board state immediately', (tester) async {
+  // BoardStore.save()/load() do real dart:io file I/O. A plain testWidgets
+  // body runs inside a FakeAsync zone, and any async chain that starts there
+  // has its post-`await` continuations routed through FakeAsync's own fake
+  // microtask queue -- real disk I/O never signals completion back into
+  // that queue, so the awaited save inside onChangeEnd/toggleHidden would
+  // never resume. `tester.runAsync` forks a zone that routes
+  // scheduleMicrotask/createTimer straight to the real root zone, but only
+  // for work that happens (synchronously, or via async chains kicked off)
+  // *inside* its callback -- so the gesture that triggers the save, the
+  // real wait for it to land, and the disk verification all have to happen
+  // inside the SAME runAsync call. Calling tester.pump()/pumpAndSettle()
+  // from inside that callback is a known deadlock (those drive the fake
+  // clock machinery, which is exactly what this zone has escaped), so we
+  // only call tester.tap() (no implicit pump) and a bare Future.delayed
+  // inside runAsync, then leave it before touching the widget tree again.
+  testWidgets(
+      'toggle switch through widget persists to disk, verified via a fresh store',
+      (tester) async {
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
-    // Tap the switch to toggle visibility
-    await tester.tap(find.byKey(const ValueKey('switch-eat')));
-    await tester.pump();
-    // Verify the board state was updated in memory
-    final ctx = tester.element(find.byType(ParentScreen));
-    final board = ProviderScope.containerOf(ctx)
-        .read(boardNotifierProvider).value!;
-    expect(board.categories.single.cards.first.hidden, isTrue);
+
+    final reloaded = await tester.runAsync(() async {
+      await tester.tap(find.byKey(const ValueKey('switch-eat')));
+      // Give the real event loop time to actually land the disk write
+      // (BoardStore.save's writeAsString + renameSync) before we read it
+      // back with a fresh store instance.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      final fresh = BoardStore(tmp, loadDefault: () async => _json);
+      return fresh.load();
+    });
+
+    final eatCard =
+        reloaded!.categories.single.cards.firstWhere((c) => c.id == 'eat');
+    expect(eatCard.hidden, isTrue);
   });
 
-  testWidgets('toggle switch through widget updates and persists state',
+  testWidgets(
+      'slider onChangeEnd persists and configures speech rate exactly once',
       (tester) async {
-    final store = BoardStore(tmp, loadDefault: () async => _json);
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        boardStoreProvider.overrideWithValue(store),
-        ttsProvider.overrideWithValue(FakeTts()),
-      ],
-      child: const MaterialApp(home: ParentScreen()),
-    ));
-    await tester.pumpAndSettle();
-    // Tap the switch widget to toggle visibility
-    await tester.tap(find.byKey(const ValueKey('switch-eat')));
-    await tester.pumpAndSettle();
-    // Verify toggle worked: board state updated
-    final ctx = tester.element(find.byType(ParentScreen));
-    var board = ProviderScope.containerOf(ctx)
-        .read(boardNotifierProvider).value!;
-    expect(board.categories.single.cards.first.hidden, isTrue);
-  });
-
-  testWidgets('slider onChangeEnd persists and configures speech rate',
-      (tester) async {
-    // Track TTS calls in this test
-    late FakeTts testTts;
-    testTts = FakeTts();
+    final tts = FakeTts();
     await tester.pumpWidget(ProviderScope(
       overrides: [
         boardStoreProvider.overrideWithValue(
             BoardStore(tmp, loadDefault: () async => _json)),
-        ttsProvider.overrideWithValue(testTts),
+        ttsProvider.overrideWithValue(tts),
       ],
       child: const MaterialApp(home: ParentScreen()),
     ));
     await tester.pumpAndSettle();
-    // Get the context and notifier for direct access
-    final ctx = tester.element(find.byType(ParentScreen));
-    final notifier =
-        ProviderScope.containerOf(ctx).read(boardNotifierProvider.notifier);
-    // Simulate slider gesture by calling setSpeechRate (the end result of onChangeEnd)
-    // This tests that the slider's onChangeEnd properly calls setSpeechRate
-    await notifier.setSpeechRate(0.6);
-    await tester.pump();
-    // Verify board state reflects the new rate
-    final board = ProviderScope.containerOf(ctx)
-        .read(boardNotifierProvider).value!;
-    expect(board.speechRate, 0.6);
-    // Verify exactly one rate:0.6 call was made to TTS
-    final rateCalls = testTts.calls.where((c) => c == 'rate:0.6').toList();
-    expect(rateCalls, hasLength(1));
-  });
+    // build() already configured the initial rate (0.45); isolate the
+    // calls made by the gesture we're about to simulate.
+    tts.calls.clear();
 
+    final slider =
+        tester.widget<Slider>(find.byKey(const ValueKey('rate-slider')));
+
+    final board = await tester.runAsync(() async {
+      slider.onChanged!(0.6);
+      slider.onChangeEnd!(0.6);
+      // Let the real save() + TTS reconfigure land before we inspect state.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      final ctx = tester.element(find.byType(ParentScreen));
+      return ProviderScope.containerOf(ctx).read(boardNotifierProvider).value!;
+    });
+
+    expect(board!.speechRate, 0.6);
+    expect(tts.calls.where((c) => c == 'rate:0.6').length, 1);
+  });
 }
