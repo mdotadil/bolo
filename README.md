@@ -1,17 +1,16 @@
-# bolo
+# Bolo
 
-A new Flutter project.
+Tap-to-speak AAC board for nonverbal kids. Tap a picture, the phone speaks the word.
 
-## Getting Started
+## Handing the phone to your child
 
-This project is a starting point for a Flutter application.
+Lock the phone into Bolo first, so home button / gestures don't exit the app:
 
-A few resources to get you started if this is your first Flutter project:
+- **Android:** Settings → Security → App pinning → on. Open Bolo, then Recents → tap the Bolo icon → Pin.
+- **iPhone:** Settings → Accessibility → Guided Access → on, set a passcode. Open Bolo and triple-click the side button.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Parent mode
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Press and hold the small gear in the top corner for 3 seconds.
+
+Symbols: Mulberry Symbols (CC-BY-SA) — see ATTRIBUTION.md.
