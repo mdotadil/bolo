@@ -123,7 +123,14 @@ void main() {
     for (final lang in supportedLanguages) {
       expect(find.byKey(ValueKey('rec-start-$lang')), findsOneWidget,
           reason: 'missing record row for $lang');
-      expect(find.text(languageDisplayNames[lang]!), findsOneWidget);
+      // Scoped to the sheet itself: Task 10's parent-mode language dropdown
+      // also renders the active language's display name (e.g. "English") on
+      // the page underneath, so an unscoped find.text would double-count.
+      expect(
+          find.descendant(
+              of: find.byType(BottomSheet),
+              matching: find.text(languageDisplayNames[lang]!)),
+          findsOneWidget);
     }
   });
 
