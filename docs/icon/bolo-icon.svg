@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Bolo app icon: hand-sketched speech bubble, graphite pencil on the app's own paper color.
+       Palette = lib/theme.dart: paper F6F4EF, graphite 4A4A44, sage A8BCA1, soft D8D3C8. -->
+  <defs>
+    <!-- pencil grain: roughen strokes slightly so they read as graphite, not ink -->
+    <filter id="pencil" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.032" numOctaves="4" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="pencilSoft" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" seed="11" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="14" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#F6F4EF"/>
+
+  <g transform="rotate(-4 512 512)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- faint "first try" ghost line, like a redrawn stroke -->
+    <path d="M 233 348 C 300 218 448 166 540 172 C 668 180 790 260 826 384"
+          stroke="#D8D3C8" stroke-width="14" opacity="0.9" filter="url(#pencilSoft)"/>
+
+    <!-- graphite hatch shading inside the lower-left inner edge -->
+    <g stroke="#4A4A44" stroke-width="7" opacity="0.22" filter="url(#pencilSoft)">
+      <path d="M 300 560 L 352 496"/>
+      <path d="M 316 602 L 374 530"/>
+      <path d="M 338 640 L 400 562"/>
+      <path d="M 366 672 L 430 594"/>
+      <path d="M 398 698 L 462 620"/>
+      <path d="M 434 716 L 498 640"/>
+    </g>
+
+    <!-- sage colored-pencil hatching, lower-right inside the bubble -->
+    <g stroke="#A8BCA1" stroke-width="12" opacity="0.8" filter="url(#pencilSoft)">
+      <path d="M 570 668 L 630 590"/>
+      <path d="M 614 668 L 676 586"/>
+      <path d="M 658 658 L 720 576"/>
+      <path d="M 702 640 L 758 562"/>
+      <path d="M 744 612 L 792 546"/>
+    </g>
+
+    <!-- main bubble outline: wobbly, confident, one stroke around with a tail -->
+    <path d="M 254 574
+             C 216 500 224 384 300 306
+             C 366 240 462 206 546 212
+             C 654 219 762 268 812 366
+             C 858 456 850 560 788 634
+             C 734 698 646 734 556 736
+             C 522 737 488 734 458 726
+             C 430 762 380 828 306 872
+             C 322 812 334 764 338 720
+             C 302 684 272 632 254 574 Z"
+          stroke="#4A4A44" stroke-width="23" opacity="0.95" filter="url(#pencil)"/>
+
+    <!-- second sketch pass: same shape re-wobbled, visibly diverging in places -->
+    <path d="M 268 560
+             C 238 494 250 396 322 326
+             C 382 264 468 234 548 240
+             C 642 246 736 292 782 378
+             C 822 460 814 546 762 612
+             C 712 672 632 706 550 708
+             C 514 709 480 704 448 694
+             C 414 734 372 788 330 822
+             C 344 776 352 738 356 702
+             C 318 668 288 622 268 560 Z"
+          stroke="#4A4A44" stroke-width="9" opacity="0.35" filter="url(#pencilSoft)"/>
+
+    <!-- three scribble dots: little pencil spirals, each a bit different -->
+    <g filter="url(#pencil)">
+      <path d="M 398 496 c 18 -22 44 -12 44 8 c 0 22 -30 32 -44 16 c -12 -14 -2 -36 20 -38 c 16 -1 30 8 32 22"
+            stroke="#4A4A44" stroke-width="15" opacity="0.9"/>
+      <path d="M 514 510 c -4 -30 34 -38 46 -16 c 10 20 -10 42 -32 36 c -18 -5 -24 -26 -12 -40 c 9 -10 26 -12 36 -4"
+            stroke="#4A4A44" stroke-width="15" opacity="0.9"/>
+      <path d="M 622 488 c 22 -16 46 2 40 22 c -6 20 -36 24 -46 6 c -9 -16 4 -34 24 -36 c 12 -1 24 5 28 14"
+            stroke="#4A4A44" stroke-width="15" opacity="0.9"/>
+    </g>
+
+    <!-- three pencil flicks, top-right: the bubble is speaking -->
+    <g stroke="#4A4A44" opacity="0.85" filter="url(#pencil)">
+      <path d="M 848 300 L 902 258" stroke-width="16"/>
+      <path d="M 872 366 L 936 344" stroke-width="16"/>
+      <path d="M 878 434 L 944 442" stroke-width="14"/>
+    </g>
+
+  </g>
+</svg>
