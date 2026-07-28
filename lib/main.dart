@@ -27,6 +27,34 @@ Future<void> main() async {
       recordingPlayerProvider.overrideWithValue(AudioplayersRecordingPlayer()),
       recorderProvider.overrideWithValue(RecordPackageRecorder()),
     ],
-    child: const BoloApp(),
+    child: const _LifecycleFlush(child: BoloApp()),
   ));
+}
+
+/// Flushes buffered usage taps when the app goes to background.
+class _LifecycleFlush extends ConsumerStatefulWidget {
+  const _LifecycleFlush({required this.child});
+  final Widget child;
+  @override
+  ConsumerState<_LifecycleFlush> createState() => _LifecycleFlushState();
+}
+
+class _LifecycleFlushState extends ConsumerState<_LifecycleFlush> {
+  late final AppLifecycleListener _listener;
+
+  @override
+  void initState() {
+    super.initState();
+    _listener = AppLifecycleListener(
+        onPause: () => ref.read(usageStoreProvider).flush());
+  }
+
+  @override
+  void dispose() {
+    _listener.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

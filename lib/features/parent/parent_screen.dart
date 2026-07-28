@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../models/board.dart';
 import '../board/board_providers.dart';
 import 'add_card_sheet.dart';
+import 'insights_section.dart';
 
 class ParentScreen extends ConsumerStatefulWidget {
   const ParentScreen({super.key});
@@ -98,6 +99,10 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                   ),
                 ),
               ]),
+            ),
+            const Padding(
+              padding: EdgeInsetsDirectional.symmetric(horizontal: 12),
+              child: InsightsSection(),
             ),
           ]);
         },
