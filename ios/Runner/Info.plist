@@ -28,6 +28,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Take a photo to create a new picture card.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record your voice for a card so the app speaks in your voice.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose a photo to create a new picture card.</string>
 	<key>UIApplicationSceneManifest</key>
