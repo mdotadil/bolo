@@ -9,6 +9,32 @@ import 'insights_section.dart';
 import 'record_sheet.dart';
 import 'type_to_speak.dart';
 
+enum ReorderAction { mainReorder, moreReorder, moveToMore, moveToMain, none }
+
+/// Translates ReorderableListView indices over the combined
+/// [main..., divider, more...] children list into a section-level action.
+/// Returns (action, oldIndex, newIndex) in SECTION-LOCAL indices.
+(ReorderAction, int, int) translateReorder(
+    int mainCount, int oldIndex, int newIndex) {
+  final divider = mainCount;
+  if (oldIndex == divider) return (ReorderAction.none, 0, 0);
+  final fromMain = oldIndex < divider;
+  // onReorderItem semantics: newIndex is already adjusted for removal.
+  final toMain = newIndex <= divider - (fromMain ? 1 : 0);
+  if (fromMain && toMain) return (ReorderAction.mainReorder, oldIndex, newIndex);
+  if (!fromMain && !toMain) {
+    return (
+      ReorderAction.moreReorder,
+      oldIndex - divider - 1,
+      newIndex - divider - 1,
+    );
+  }
+  if (fromMain) {
+    return (ReorderAction.moveToMore, oldIndex, 0);
+  }
+  return (ReorderAction.moveToMain, oldIndex - divider - 1, newIndex);
+}
+
 class ParentScreen extends ConsumerStatefulWidget {
   const ParentScreen({super.key});
   @override
@@ -29,7 +55,7 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
         error: (e, _) => Center(child: Text('Could not load board: $e')),
         data: (board) {
           final category = board.categories[_categoryIndex];
-          return Column(children: [
+          return ListView(children: [
             Padding(
               padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 12, 0),
               child: Column(
@@ -99,38 +125,41 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                 ),
               ]),
             ),
-            Expanded(
-              child: ReorderableListView(
-                onReorderItem: (oldIndex, newIndex) => ref
-                    .read(boardNotifierProvider.notifier)
-                    .reorderCard(category.id, oldIndex, newIndex),
-                children: [
-                  for (final card in category.cards)
-                    ListTile(
-                      key: ValueKey('row-${card.id}'),
-                      leading: SizedBox(width: 40, height: 40, child: _thumb(card)),
-                      title: Text(
-                          card.labels[board.activeLanguage] ?? card.labels['en'] ?? ''),
-                      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                        IconButton(
-                          key: ValueKey('mic-${card.id}'),
-                          icon: const Icon(Icons.mic_none),
-                          onPressed: () => showRecordSheet(context, ref, card),
-                        ),
-                        Semantics(
-                          identifier: 'switch-${card.id}',
-                          child: Switch(
-                            key: ValueKey('switch-${card.id}'),
-                            value: !card.hidden,
-                            onChanged: (_) => ref
-                                .read(boardNotifierProvider.notifier)
-                                .toggleHidden(card.id),
-                          ),
-                        ),
-                      ]),
-                    ),
-                ],
-              ),
+            ReorderableListView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              onReorderItem: (oldIndex, newIndex) {
+                final n = ref.read(boardNotifierProvider.notifier);
+                final (action, from, to) = translateReorder(
+                    category.cards.length, oldIndex, newIndex);
+                switch (action) {
+                  case ReorderAction.mainReorder:
+                    n.reorderCard(category.id, from, to);
+                  case ReorderAction.moreReorder:
+                    n.reorderCard(category.id, from, to, inMore: true);
+                  case ReorderAction.moveToMore:
+                    n.moveCardToPage(category.id,
+                        category.cards[from].id, toMore: true);
+                  case ReorderAction.moveToMain:
+                    n.moveCardToPage(category.id,
+                        category.moreCards[from].id, toMore: false);
+                  case ReorderAction.none:
+                    break;
+                }
+              },
+              children: [
+                for (final card in category.cards)
+                  _cardRow(board, card),
+                const ListTile(
+                  key: ValueKey('more-divider'),
+                  dense: true,
+                  title: Text('— More page —',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12)),
+                ),
+                for (final card in category.moreCards)
+                  _cardRow(board, card),
+              ],
             ),
             Padding(
               padding: const EdgeInsetsDirectional.all(12),
@@ -165,6 +194,30 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
           ]);
         },
       ),
+    );
+  }
+
+  Widget _cardRow(Board board, SymbolCard card) {
+    return ListTile(
+      key: ValueKey('row-${card.id}'),
+      leading: SizedBox(width: 40, height: 40, child: _thumb(card)),
+      title: Text(card.labels[board.activeLanguage] ?? card.labels['en'] ?? ''),
+      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+        IconButton(
+          key: ValueKey('mic-${card.id}'),
+          icon: const Icon(Icons.mic_none),
+          onPressed: () => showRecordSheet(context, ref, card),
+        ),
+        Semantics(
+          identifier: 'switch-${card.id}',
+          child: Switch(
+            key: ValueKey('switch-${card.id}'),
+            value: !card.hidden,
+            onChanged: (_) =>
+                ref.read(boardNotifierProvider.notifier).toggleHidden(card.id),
+          ),
+        ),
+      ]),
     );
   }
 

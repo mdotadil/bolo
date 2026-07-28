@@ -12,7 +12,8 @@ import '../support/fakes.dart';
 
 const _json =
     '{"speechRate":0.45,"categories":[{"id":"wants","names":{"en":"Wants"},"cards":['
-    '{"id":"eat","labels":{"en":"eat","ur":"کھانا","ar":"أكل"}},{"id":"drink","labels":{"en":"drink"}}]}]}';
+    '{"id":"eat","labels":{"en":"eat","ur":"کھانا","ar":"أكل"}},{"id":"drink","labels":{"en":"drink"}}],'
+    '"moreCards":[{"id":"phrase-1","labels":{"en":"I need the toilet"}}]}]}';
 
 void main() {
   late Directory tmp;
@@ -166,5 +167,36 @@ void main() {
     });
     expect(find.byKey(const ValueKey('voice-unavailable-note')), findsOneWidget);
     expect(find.textContaining('العربية voice not available'), findsOneWidget);
+  });
+
+  testWidgets('divider row separates main and more sections', (tester) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('more-divider')), findsOneWidget);
+    // divider sits after the main cards, before phrase-1's row
+    final dividerY =
+        tester.getTopLeft(find.byKey(const ValueKey('more-divider'))).dy;
+    final phraseY =
+        tester.getTopLeft(find.byKey(const ValueKey('row-phrase-1'))).dy;
+    expect(dividerY, lessThan(phraseY));
+  });
+
+  group('reorder index translation', () {
+    // mainCount = 2 → indices: 0,1 = main; 2 = divider; 3.. = more
+    test('within main', () {
+      expect(translateReorder(2, 0, 1), (ReorderAction.mainReorder, 0, 1));
+    });
+    test('within more', () {
+      expect(translateReorder(2, 3, 4), (ReorderAction.moreReorder, 0, 1));
+    });
+    test('main to more (crossing down past divider)', () {
+      expect(translateReorder(2, 0, 4), (ReorderAction.moveToMore, 0, 0));
+    });
+    test('more to main (crossing up past divider)', () {
+      expect(translateReorder(2, 3, 1), (ReorderAction.moveToMain, 0, 1));
+    });
+    test('dragging the divider itself is a no-op', () {
+      expect(translateReorder(2, 2, 0), (ReorderAction.none, 0, 0));
+    });
   });
 }
