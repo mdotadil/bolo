@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/board.dart';
 import '../../services/board_store.dart';
+import '../../services/recording_player.dart';
 import '../../services/speech_service.dart';
 
 final boardStoreProvider =
@@ -9,8 +11,12 @@ final boardStoreProvider =
 final ttsProvider =
     Provider<Tts>((ref) => throw UnimplementedError('override in main'));
 
-final speechServiceProvider =
-    Provider<SpeechService>((ref) => SpeechService(ref.watch(ttsProvider)));
+final docsDirProvider =
+    Provider<Directory>((ref) => throw UnimplementedError('override in main'));
+
+final speechServiceProvider = Provider<SpeechService>((ref) => SpeechService(
+    ref.watch(ttsProvider), ref.watch(recordingPlayerProvider),
+    docsDir: ref.watch(docsDirProvider)));
 
 final selectedCategoryProvider = StateProvider<int>((ref) => 0);
 

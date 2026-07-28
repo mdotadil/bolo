@@ -6,22 +6,12 @@ import 'package:bolo/features/board/board_providers.dart';
 import 'package:bolo/features/parent/parent_screen.dart';
 import 'package:bolo/features/parent/photo_picker.dart';
 import 'package:bolo/services/board_store.dart';
-import 'package:bolo/services/speech_service.dart';
+import 'package:bolo/services/recording_player.dart';
+import '../support/fakes.dart';
 
 const _json =
     '{"speechRate":0.45,"categories":[{"id":"wants","names":{"en":"Wants"},"cards":['
     '{"id":"eat","labels":{"en":"eat"}}]}]}';
-
-class FakeTts implements Tts {
-  @override
-  Future<void> init() async {}
-  @override
-  Future<void> setSpeechRate(double rate) async {}
-  @override
-  Future<void> stop() async {}
-  @override
-  Future<void> speak(String text) async {}
-}
 
 class FakePicker implements PhotoPicker {
   @override
@@ -59,6 +49,8 @@ void main() {
       boardStoreProvider.overrideWithValue(
           BoardStore(tmp, loadDefault: () async => _json)),
       ttsProvider.overrideWithValue(FakeTts()),
+      recordingPlayerProvider.overrideWithValue(FakePlayer()),
+      docsDirProvider.overrideWithValue(tmp),
       photoPickerProvider.overrideWithValue(FakePicker()),
     ], child: const MaterialApp(home: ParentScreen())));
     await tester.pumpAndSettle();
@@ -85,6 +77,8 @@ void main() {
       boardStoreProvider.overrideWithValue(
           BoardStore(tmp, loadDefault: () async => _json)),
       ttsProvider.overrideWithValue(FakeTts()),
+      recordingPlayerProvider.overrideWithValue(FakePlayer()),
+      docsDirProvider.overrideWithValue(tmp),
       photoPickerProvider.overrideWithValue(FakePicker()),
     ], child: const MaterialApp(home: ParentScreen())));
     await tester.pumpAndSettle();
@@ -114,6 +108,8 @@ void main() {
       boardStoreProvider.overrideWithValue(
           BoardStore(tmp, loadDefault: () async => _json)),
       ttsProvider.overrideWithValue(FakeTts()),
+      recordingPlayerProvider.overrideWithValue(FakePlayer()),
+      docsDirProvider.overrideWithValue(tmp),
       photoPickerProvider.overrideWithValue(picker),
     ], child: const MaterialApp(home: ParentScreen())));
     await tester.pumpAndSettle();

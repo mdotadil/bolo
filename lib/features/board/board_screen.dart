@@ -46,7 +46,7 @@ class BoardScreen extends ConsumerWidget {
                     card: cards[i],
                     onTap: () => ref
                         .read(speechServiceProvider)
-                        .speakCard(cards[i]),
+                        .speakCard(cards[i], language: board.activeLanguage),
                   ),
                 ),
               ),

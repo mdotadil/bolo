@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bolo/features/board/board_providers.dart';
 import 'package:bolo/models/board.dart';
 import 'package:bolo/services/board_store.dart';
+import 'package:bolo/services/recording_player.dart';
 import 'package:bolo/services/speech_service.dart';
+import '../support/fakes.dart';
 
 const _defaultJson =
     '{"speechRate":0.45,"categories":[{"id":"wants","names":{"en":"Wants"},"cards":['
@@ -17,18 +19,6 @@ const _threeCardJson =
     '{"id":"b","labels":{"en":"b"},"symbolAsset":"assets/symbols/drink.svg"},'
     '{"id":"c","labels":{"en":"c"},"symbolAsset":"assets/symbols/drink.svg"}]}]}';
 
-class FakeTts implements Tts {
-  final calls = <String>[];
-  @override
-  Future<void> init() async => calls.add('init');
-  @override
-  Future<void> setSpeechRate(double rate) async => calls.add('rate:$rate');
-  @override
-  Future<void> stop() async => calls.add('stop');
-  @override
-  Future<void> speak(String text) async => calls.add('speak:$text');
-}
-
 /// Simulates a platform TTS channel that has no engine/voice installed.
 class ThrowingTts implements Tts {
   @override
@@ -40,6 +30,12 @@ class ThrowingTts implements Tts {
   Future<void> stop() async => throw StateError('no TTS engine available');
   @override
   Future<void> speak(String text) async =>
+      throw StateError('no TTS engine available');
+  @override
+  Future<void> setLanguage(String tag) async =>
+      throw StateError('no TTS engine available');
+  @override
+  Future<bool> isLanguageAvailable(String tag) async =>
       throw StateError('no TTS engine available');
 }
 
@@ -55,6 +51,8 @@ void main() {
       boardStoreProvider.overrideWithValue(
           BoardStore(tmp, loadDefault: () async => _defaultJson)),
       ttsProvider.overrideWithValue(tts),
+      recordingPlayerProvider.overrideWithValue(FakePlayer()),
+      docsDirProvider.overrideWithValue(tmp),
     ]);
   });
   tearDown(() {
@@ -65,7 +63,7 @@ void main() {
   test('build loads board and configures speech with its rate', () async {
     final board = await container.read(boardNotifierProvider.future);
     expect(board.categories.single.cards.length, 2);
-    expect(tts.calls, ['init', 'rate:0.45']);
+    expect(tts.calls, ['init', 'rate:0.45', 'lang:en-US']);
   });
 
   test('toggleHidden flips the flag and persists', () async {
@@ -93,6 +91,8 @@ void main() {
       boardStoreProvider.overrideWithValue(
           BoardStore(tmp, loadDefault: () async => _threeCardJson)),
       ttsProvider.overrideWithValue(tts),
+      recordingPlayerProvider.overrideWithValue(FakePlayer()),
+      docsDirProvider.overrideWithValue(tmp),
     ]);
     await threeContainer.read(boardNotifierProvider.future);
     // Starting with [a, b, c], move c up to position 0
@@ -108,6 +108,8 @@ void main() {
       boardStoreProvider.overrideWithValue(
           BoardStore(tmp, loadDefault: () async => _threeCardJson)),
       ttsProvider.overrideWithValue(tts),
+      recordingPlayerProvider.overrideWithValue(FakePlayer()),
+      docsDirProvider.overrideWithValue(tmp),
     ]);
     await threeContainer.read(boardNotifierProvider.future);
     // Starting with [a, b, c], move a down to the end → newIndex=2 (end of list after removal)
@@ -133,7 +135,7 @@ void main() {
     await container.read(boardNotifierProvider.future);
     await container.read(boardNotifierProvider.notifier).setSpeechRate(0.6);
     expect(container.read(boardNotifierProvider).value!.speechRate, 0.6);
-    expect(tts.calls.last, 'rate:0.6');
+    expect(tts.calls, containsAllInOrder(['rate:0.6', 'lang:en-US']));
   });
 
   test('build still returns the board when TTS init throws', () async {
@@ -141,6 +143,8 @@ void main() {
       boardStoreProvider.overrideWithValue(
           BoardStore(tmp, loadDefault: () async => _defaultJson)),
       ttsProvider.overrideWithValue(ThrowingTts()),
+      recordingPlayerProvider.overrideWithValue(FakePlayer()),
+      docsDirProvider.overrideWithValue(tmp),
     ]);
     final board = await throwingContainer.read(boardNotifierProvider.future);
     expect(board.categories.single.cards.length, 2);

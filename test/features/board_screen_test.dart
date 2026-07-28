@@ -5,7 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bolo/features/board/board_providers.dart';
 import 'package:bolo/features/board/board_screen.dart';
 import 'package:bolo/services/board_store.dart';
-import 'package:bolo/services/speech_service.dart';
+import 'package:bolo/services/recording_player.dart';
+import '../support/fakes.dart';
 
 const _json =
     '{"speechRate":0.45,"categories":['
@@ -13,18 +14,6 @@ const _json =
     '{"id":"eat","labels":{"en":"eat"}},'
     '{"id":"drink","labels":{"en":"drink"},"hidden":true}]},'
     '{"id":"help","names":{"en":"Help"},"cards":[{"id":"help","labels":{"en":"help me"}}]}]}';
-
-class FakeTts implements Tts {
-  final calls = <String>[];
-  @override
-  Future<void> init() async {}
-  @override
-  Future<void> setSpeechRate(double rate) async {}
-  @override
-  Future<void> stop() async => calls.add('stop');
-  @override
-  Future<void> speak(String text) async => calls.add('speak:$text');
-}
 
 void main() {
   late Directory tmp;
@@ -40,6 +29,8 @@ void main() {
         boardStoreProvider.overrideWithValue(
             BoardStore(tmp, loadDefault: () async => _json)),
         ttsProvider.overrideWithValue(tts),
+        recordingPlayerProvider.overrideWithValue(FakePlayer()),
+        docsDirProvider.overrideWithValue(tmp),
       ], child: const MaterialApp(home: BoardScreen()));
 
   testWidgets('shows visible cards of selected category, hides hidden ones',
@@ -56,7 +47,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('eat'));
     await tester.pump();
-    expect(tts.calls, ['stop', 'speak:eat']);
+    expect(tts.calls, containsAllInOrder(['stop', 'lang:en-US', 'speak:eat']));
   });
 
   testWidgets('category tab switches the grid', (tester) async {

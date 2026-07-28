@@ -5,23 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bolo/features/board/board_providers.dart';
 import 'package:bolo/features/parent/parent_screen.dart';
 import 'package:bolo/services/board_store.dart';
-import 'package:bolo/services/speech_service.dart';
+import 'package:bolo/services/recording_player.dart';
+import '../support/fakes.dart';
 
 const _json =
     '{"speechRate":0.45,"categories":[{"id":"wants","names":{"en":"Wants"},"cards":['
     '{"id":"eat","labels":{"en":"eat"}},{"id":"drink","labels":{"en":"drink"}}]}]}';
-
-class FakeTts implements Tts {
-  final calls = <String>[];
-  @override
-  Future<void> init() async => calls.add('init');
-  @override
-  Future<void> setSpeechRate(double rate) async => calls.add('rate:$rate');
-  @override
-  Future<void> stop() async => calls.add('stop');
-  @override
-  Future<void> speak(String text) async => calls.add('speak:$text');
-}
 
 void main() {
   late Directory tmp;
@@ -32,6 +21,8 @@ void main() {
         boardStoreProvider.overrideWithValue(
             BoardStore(tmp, loadDefault: () async => _json)),
         ttsProvider.overrideWithValue(FakeTts()),
+        recordingPlayerProvider.overrideWithValue(FakePlayer()),
+        docsDirProvider.overrideWithValue(tmp),
       ], child: const MaterialApp(home: ParentScreen()));
 
   testWidgets('lists all cards of the category including hidden toggles',
@@ -108,6 +99,8 @@ void main() {
         boardStoreProvider.overrideWithValue(
             BoardStore(tmp, loadDefault: () async => _json)),
         ttsProvider.overrideWithValue(tts),
+        recordingPlayerProvider.overrideWithValue(FakePlayer()),
+        docsDirProvider.overrideWithValue(tmp),
       ],
       child: const MaterialApp(home: ParentScreen()),
     ));

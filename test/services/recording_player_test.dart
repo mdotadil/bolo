@@ -1,37 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:bolo/services/audio_recorder.dart';
-import 'package:bolo/services/recording_player.dart';
-
-class FakeRecorder implements Recorder {
-  final calls = <String>[];
-  bool _rec = false;
-  @override
-  bool get isRecording => _rec;
-  @override
-  Future<bool> hasPermission() async => true;
-  @override
-  Future<void> start(String path) async {
-    calls.add('start:$path');
-    _rec = true;
-  }
-
-  @override
-  Future<String?> stop() async {
-    if (!_rec) return null;
-    _rec = false;
-    final path = calls.last.substring('start:'.length);
-    calls.add('stop');
-    return path;
-  }
-}
-
-class FakePlayer implements RecordingPlayer {
-  final calls = <String>[];
-  @override
-  Future<void> play(String p) async => calls.add('play:$p');
-  @override
-  Future<void> stop() async => calls.add('stop');
-}
+import '../support/fakes.dart';
 
 void main() {
   test('recorder stop returns the started path once', () async {
