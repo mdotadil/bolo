@@ -90,11 +90,19 @@ class BackupService {
           }
         }
       }
-      for (final name in ['board.json', 'usage.json']) {
-        final staged = File('${staging.path}/$name');
-        if (staged.existsSync()) {
-          staged.copySync('${_docsDir.path}/$name');
-        }
+      // board.json is always staged (validated above).
+      File('${staging.path}/board.json')
+          .copySync('${_docsDir.path}/board.json');
+
+      // usage.json: restore fully "becomes the backup" — if the archive
+      // carried no usage.json, the live one must go too, not survive as a
+      // stale leftover referencing cards that may no longer exist.
+      final stagedUsage = File('${staging.path}/usage.json');
+      final liveUsage = File('${_docsDir.path}/usage.json');
+      if (stagedUsage.existsSync()) {
+        stagedUsage.copySync(liveUsage.path);
+      } else if (liveUsage.existsSync()) {
+        liveUsage.deleteSync();
       }
     } finally {
       try {

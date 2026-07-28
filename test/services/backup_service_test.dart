@@ -93,4 +93,47 @@ void main() {
     await expectLater(
         BackupService(docs).restore(tampered), throwsA(isA<FormatException>()));
   });
+
+  test(
+      'restore fully becomes the backup: usage.json is deleted (not left over) '
+      'when the archive has none, matching the photos/recordings wipe',
+      () async {
+    // Sparse backup: board.json only, no usage.json, no photos/recordings.
+    final sparseDocs = Directory.systemTemp.createTempSync('bolo_sparse');
+    addTearDown(() => sparseDocs.deleteSync(recursive: true));
+    File('${sparseDocs.path}/board.json').writeAsStringSync(jsonEncode({
+      'version': 2,
+      'speechRate': 0.45,
+      'activeLanguage': 'en',
+      'categories': [
+        {
+          'id': 'wants',
+          'names': {'en': 'Wants'},
+          'cards': [
+            {
+              'id': 'eat',
+              'labels': {'en': 'eat'},
+            }
+          ],
+        }
+      ],
+    }));
+    final sparseBackup = await BackupService(sparseDocs).createBackup();
+    addTearDown(() => sparseBackup.deleteSync());
+
+    // Restore over the populated `docs` dir from setUp (which has
+    // usage.json, photos/b.jpg, recordings/eat_ur.m4a).
+    await BackupService(docs).restore(sparseBackup);
+
+    final board =
+        jsonDecode(File('${docs.path}/board.json').readAsStringSync())
+            as Map<String, dynamic>;
+    expect(board['categories'][0]['cards'][0]['id'], 'eat');
+    expect(File('${docs.path}/usage.json').existsSync(), isFalse);
+    final photosDir = Directory('${docs.path}/photos');
+    expect(!photosDir.existsSync() || photosDir.listSync().isEmpty, isTrue);
+    final recordingsDir = Directory('${docs.path}/recordings');
+    expect(!recordingsDir.existsSync() || recordingsDir.listSync().isEmpty,
+        isTrue);
+  });
 }
