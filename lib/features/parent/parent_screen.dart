@@ -63,12 +63,15 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                       key: ValueKey('row-${card.id}'),
                       leading: SizedBox(width: 40, height: 40, child: _thumb(card)),
                       title: Text(card.labels['en'] ?? ''),
-                      trailing: Switch(
-                        key: ValueKey('switch-${card.id}'),
-                        value: !card.hidden,
-                        onChanged: (_) => ref
-                            .read(boardNotifierProvider.notifier)
-                            .toggleHidden(card.id),
+                      trailing: Semantics(
+                        identifier: 'switch-${card.id}',
+                        child: Switch(
+                          key: ValueKey('switch-${card.id}'),
+                          value: !card.hidden,
+                          onChanged: (_) => ref
+                              .read(boardNotifierProvider.notifier)
+                              .toggleHidden(card.id),
+                        ),
                       ),
                     ),
                 ],

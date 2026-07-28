@@ -1,0 +1,20 @@
+# Smoke: child taps a card; parent gate opens; hide/show works.
+# Build with a short gate so Maestro's longPressOn (~1s) clears it:
+#   flutter run --dart-define=BOLO_GATE_MS=800   (keep it running, then: maestro test .maestro/board-smoke.yaml)
+# Running on the iOS simulator (no Android SDK on this machine): the AppBar
+# back button has no `- back` equivalent, so we tap its on-screen location
+# per the brief's documented iOS alternative.
+appId: com.mdotadil.bolo
+---
+- launchApp
+- assertVisible: "eat"
+- tapOn: "eat"          # speaks; no navigation
+- assertVisible: "eat"
+- longPressOn:
+    id: "grownup-gate"
+- assertVisible: "Parent mode"
+- tapOn:
+    id: "switch-eat"
+- tapOn:
+    point: 7%,10%   # AppBar back button (iOS simulator; `- back` is Android-only)
+- assertNotVisible: "eat"   # hidden card gone from child board
