@@ -72,7 +72,9 @@ class Board {
       );
 
   factory Board.fromJson(Map<String, dynamic> json) => Board(
-        speechRate: (json['speechRate'] as num?)?.toDouble() ?? 0.45,
+        speechRate: ((json['speechRate'] as num?)?.toDouble() ?? 0.45)
+            .clamp(0.3, 0.7)
+            .toDouble(),
         categories: (json['categories'] as List)
             .map((c) => BoardCategory.fromJson(c as Map<String, dynamic>))
             .toList(),

@@ -28,4 +28,11 @@ void main() {
     expect(hidden.labels['en'], 'eat');
     expect(hidden.symbolAsset, 'a.svg');
   });
+
+  test('speechRate is clamped to the slider range when out of bounds', () {
+    final tooHigh = Board.fromJson({'speechRate': 1.5, 'categories': []});
+    final tooLow = Board.fromJson({'speechRate': -0.2, 'categories': []});
+    expect(tooHigh.speechRate, 0.7);
+    expect(tooLow.speechRate, 0.3);
+  });
 }

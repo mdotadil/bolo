@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bolo/features/board/board_providers.dart';
+import 'package:bolo/models/board.dart';
 import 'package:bolo/services/board_store.dart';
 import 'package:bolo/services/speech_service.dart';
 
@@ -26,6 +27,20 @@ class FakeTts implements Tts {
   Future<void> stop() async => calls.add('stop');
   @override
   Future<void> speak(String text) async => calls.add('speak:$text');
+}
+
+/// Simulates a platform TTS channel that has no engine/voice installed.
+class ThrowingTts implements Tts {
+  @override
+  Future<void> init() async => throw StateError('no TTS engine available');
+  @override
+  Future<void> setSpeechRate(double rate) async =>
+      throw StateError('no TTS engine available');
+  @override
+  Future<void> stop() async => throw StateError('no TTS engine available');
+  @override
+  Future<void> speak(String text) async =>
+      throw StateError('no TTS engine available');
 }
 
 void main() {
@@ -119,5 +134,18 @@ void main() {
     await container.read(boardNotifierProvider.notifier).setSpeechRate(0.6);
     expect(container.read(boardNotifierProvider).value!.speechRate, 0.6);
     expect(tts.calls.last, 'rate:0.6');
+  });
+
+  test('build still returns the board when TTS init throws', () async {
+    final throwingContainer = ProviderContainer(overrides: [
+      boardStoreProvider.overrideWithValue(
+          BoardStore(tmp, loadDefault: () async => _defaultJson)),
+      ttsProvider.overrideWithValue(ThrowingTts()),
+    ]);
+    final board = await throwingContainer.read(boardNotifierProvider.future);
+    expect(board.categories.single.cards.length, 2);
+    expect(
+        throwingContainer.read(boardNotifierProvider), isA<AsyncData<Board>>());
+    throwingContainer.dispose();
   });
 }

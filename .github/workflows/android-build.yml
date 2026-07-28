@@ -1,7 +1,7 @@
 # Android build workflow for Bolo.
 #
 # Builds a signed release APK when the repo has release-signing secrets
-# configured, otherwise falls back to an unsigned debug APK so the pipeline
+# configured, otherwise falls back to a debug-signed APK so the pipeline
 # always produces something installable.
 #
 # ---------------------------------------------------------------------------
@@ -9,7 +9,7 @@
 # ---------------------------------------------------------------------------
 # Add these secrets under GitHub repo Settings > Secrets and variables >
 # Actions > New repository secret. Without them this workflow still runs
-# fine, it just builds an unsigned debug APK instead.
+# fine, it just builds a debug-signed APK instead.
 #
 #   KEYSTORE_BASE64    Base64-encoded contents of the release keystore.
 #                       Produce it locally from the keystore that already
@@ -76,7 +76,7 @@ jobs:
           if [ "$HAS_SECRETS" = "true" ]; then
             echo "Release signing secrets found — will build a signed release APK."
           else
-            echo "Release signing secrets NOT configured — will build an unsigned debug APK instead."
+            echo "Release signing secrets NOT configured — will build a debug-signed APK instead."
           fi
 
       - name: Set up release signing
@@ -101,10 +101,10 @@ jobs:
           echo "Building signed release APK."
           flutter build apk --release
 
-      - name: Build debug APK (unsigned fallback)
+      - name: Build debug APK (debug-signed fallback)
         if: steps.signing_check.outputs.has_secrets != 'true'
         run: |
-          echo "Building unsigned debug APK (no release signing secrets configured)."
+          echo "Building debug-signed APK (no release signing secrets configured)."
           flutter build apk --debug
 
       - name: Upload release APK

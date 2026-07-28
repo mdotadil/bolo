@@ -52,7 +52,10 @@ class _CardTileState extends State<CardTile> {
     if (photo != null) {
       return ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.file(File(photo), fit: BoxFit.cover, width: double.infinity));
+          child: Image.file(File(photo),
+              fit: BoxFit.cover,
+              width: double.infinity,
+              errorBuilder: (_, _, _) => const SizedBox.shrink()));
     }
     final asset = widget.card.symbolAsset;
     if (asset != null) return SvgPicture.asset(asset);

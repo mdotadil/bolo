@@ -21,7 +21,12 @@ class BoardNotifier extends AsyncNotifier<Board> {
   @override
   Future<Board> build() async {
     final board = await ref.read(boardStoreProvider).load();
-    await ref.read(speechServiceProvider).configure(rate: board.speechRate);
+    try {
+      await ref.read(speechServiceProvider).configure(rate: board.speechRate);
+    } catch (_) {
+      // TTS platform channel can throw (no engine, missing voice). Speech
+      // becomes silently unavailable rather than blanking the whole app.
+    }
     return board;
   }
 

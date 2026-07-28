@@ -107,7 +107,9 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
 
   Widget _thumb(SymbolCard card) {
     if (card.photoPath != null) {
-      return Image.file(File(card.photoPath!), fit: BoxFit.cover);
+      return Image.file(File(card.photoPath!),
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => const SizedBox.shrink());
     }
     if (card.symbolAsset != null) return SvgPicture.asset(card.symbolAsset!);
     return const SizedBox.shrink();
