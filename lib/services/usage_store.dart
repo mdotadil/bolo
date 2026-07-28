@@ -72,19 +72,28 @@ class UsageStore {
 
   Future<UsageData> load() async {
     final raw = _readRaw();
-    final perCard = <String, CardUsage>{};
-    ((raw['perCard'] as Map<String, dynamic>?) ?? {}).forEach((id, v) {
-      final m = v as Map<String, dynamic>;
-      perCard[id] = CardUsage(
-        count: m['count'] as int,
-        firstUsed: DateTime.parse(m['firstUsed'] as String),
-        lastUsed: DateTime.parse(m['lastUsed'] as String),
-      );
-    });
-    final perDay = <String, int>{};
-    ((raw['perDay'] as Map<String, dynamic>?) ?? {})
-        .forEach((day, n) => perDay[day] = n as int);
-    return UsageData(perCard: perCard, perDay: perDay);
+    try {
+      final perCard = <String, CardUsage>{};
+      ((raw['perCard'] as Map<String, dynamic>?) ?? {}).forEach((id, v) {
+        final m = v as Map<String, dynamic>;
+        perCard[id] = CardUsage(
+          count: m['count'] as int,
+          firstUsed: DateTime.parse(m['firstUsed'] as String),
+          lastUsed: DateTime.parse(m['lastUsed'] as String),
+        );
+      });
+      final perDay = <String, int>{};
+      ((raw['perDay'] as Map<String, dynamic>?) ?? {})
+          .forEach((day, n) => perDay[day] = n as int);
+      return UsageData(perCard: perCard, perDay: perDay);
+    } catch (_) {
+      // Valid JSON but semantically malformed (wrong types, bad dates, etc.):
+      // quarantine like a syntax error, never let a parse error escape.
+      try {
+        if (_file.existsSync()) _file.renameSync('${_file.path}.corrupt');
+      } catch (_) {}
+      return const UsageData(perCard: {}, perDay: {});
+    }
   }
 
   Map<String, dynamic> _readRaw() {

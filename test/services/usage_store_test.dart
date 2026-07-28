@@ -64,4 +64,15 @@ void main() {
     expect((await store.load()).perCard['eat']!.count, 1);
     expect(File('${tmp.path}/usage.json.corrupt').existsSync(), isTrue);
   });
+
+  test(
+      'semantically malformed usage.json (valid JSON, wrong types) is set '
+      'aside and load() returns empty data without throwing', () async {
+    file().writeAsStringSync('{"perCard": {"eat": {"count": "seven"}}}');
+    final store = UsageStore(tmp, clock: () => DateTime(2026, 7, 28));
+    final data = await store.load();
+    expect(data.perCard, isEmpty);
+    expect(data.perDay, isEmpty);
+    expect(File('${tmp.path}/usage.json.corrupt').existsSync(), isTrue);
+  });
 }
