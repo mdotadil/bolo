@@ -87,6 +87,7 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                       await ref
                           .read(boardNotifierProvider.notifier)
                           .setSpeechRate(v);
+                      if (!mounted) return;
                       setState(() => _pendingRate = null);
                     },
                   ),
