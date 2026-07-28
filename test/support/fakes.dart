@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:bolo/services/audio_recorder.dart';
 import 'package:bolo/services/recording_player.dart';
 import 'package:bolo/services/speech_service.dart';
@@ -45,6 +46,9 @@ class FakeRecorder implements Recorder {
   Future<void> start(String path) async {
     calls.add('start:$path');
     _rec = true;
+    // Real recorders create the file at `path` as soon as recording starts;
+    // mirror that so tmp-then-rename callers under test see a real file.
+    File(path).createSync(recursive: true);
   }
 
   @override

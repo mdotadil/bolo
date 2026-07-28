@@ -6,6 +6,7 @@ import '../../models/board.dart';
 import '../board/board_providers.dart';
 import 'add_card_sheet.dart';
 import 'insights_section.dart';
+import 'record_sheet.dart';
 
 class ParentScreen extends ConsumerStatefulWidget {
   const ParentScreen({super.key});
@@ -64,16 +65,23 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                       key: ValueKey('row-${card.id}'),
                       leading: SizedBox(width: 40, height: 40, child: _thumb(card)),
                       title: Text(card.labels['en'] ?? ''),
-                      trailing: Semantics(
-                        identifier: 'switch-${card.id}',
-                        child: Switch(
-                          key: ValueKey('switch-${card.id}'),
-                          value: !card.hidden,
-                          onChanged: (_) => ref
-                              .read(boardNotifierProvider.notifier)
-                              .toggleHidden(card.id),
+                      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                        IconButton(
+                          key: ValueKey('mic-${card.id}'),
+                          icon: const Icon(Icons.mic_none),
+                          onPressed: () => showRecordSheet(context, ref, card),
                         ),
-                      ),
+                        Semantics(
+                          identifier: 'switch-${card.id}',
+                          child: Switch(
+                            key: ValueKey('switch-${card.id}'),
+                            value: !card.hidden,
+                            onChanged: (_) => ref
+                                .read(boardNotifierProvider.notifier)
+                                .toggleHidden(card.id),
+                          ),
+                        ),
+                      ]),
                     ),
                 ],
               ),
