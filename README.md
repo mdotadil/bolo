@@ -2,6 +2,14 @@
 
 Tap-to-speak AAC board for nonverbal kids. Tap a picture, the phone speaks the word.
 
+## Install on Android
+
+Scan to download the latest signed APK (sign in to GitHub if asked), then open the downloaded file to install:
+
+![Download Bolo for Android](docs/img/qr-download.png)
+
+Or download directly: [latest bolo.apk](https://github.com/mdotadil/bolo/releases/latest/download/bolo.apk)
+
 ## Handing the phone to your child
 
 Lock the phone into Bolo first, so home button / gestures don't exit the app:
