@@ -7,6 +7,7 @@ import '../board/board_providers.dart';
 import 'add_card_sheet.dart';
 import 'insights_section.dart';
 import 'record_sheet.dart';
+import 'type_to_speak.dart';
 
 class ParentScreen extends ConsumerStatefulWidget {
   const ParentScreen({super.key});
@@ -152,6 +153,10 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                   ),
                 ),
               ]),
+            ),
+            const Padding(
+              padding: EdgeInsetsDirectional.symmetric(horizontal: 12),
+              child: TypeToSpeak(),
             ),
             const Padding(
               padding: EdgeInsetsDirectional.symmetric(horizontal: 12),
