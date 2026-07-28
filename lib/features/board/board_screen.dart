@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme.dart';
+import '../parent/hold_to_open.dart';
+import '../parent/parent_screen.dart';
 import 'board_providers.dart';
 import 'card_tile.dart';
 
@@ -60,8 +62,14 @@ class BoardScreen extends ConsumerWidget {
     );
   }
 
-  /// Replaced with the parent-mode gate in Task 9.
-  Widget gateSlot(BuildContext context) => const SizedBox(width: 48, height: 48);
+  Widget gateSlot(BuildContext context) => HoldToOpen(
+        onOpen: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ParentScreen())),
+        child: const Padding(
+          padding: EdgeInsetsDirectional.all(12),
+          child: Icon(Icons.settings_outlined, size: 24, color: BoloTheme.cardBorder),
+        ),
+      );
 }
 
 class _CategoryTabs extends StatelessWidget {
