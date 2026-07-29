@@ -98,6 +98,39 @@ void main() {
     expect(eat.recordings['ur'], 'recordings/eat_ur.m4a');
   });
 
+  testWidgets(
+      'recording temp path keeps the .m4a extension '
+      '(AVAudioRecorder infers container from extension)', (tester) async {
+    await pumpParent(tester);
+    await tester.tap(find.byKey(const ValueKey('mic-eat')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('rec-start-ur')));
+    await tester.pump();
+
+    // record_ios calls AVAudioRecorder(url:settings:) directly, and
+    // AVAudioRecorder infers the output *container* format from the URL's
+    // path extension. A `.tmp` extension there produced a file AVPlayer
+    // could not parse even after the later rename to `.m4a` (the bug this
+    // pins down). The path handed to the recorder at start-time must
+    // already carry a real audio extension.
+    final startCall =
+        fakeRecorder.calls.firstWhere((c) => c.startsWith('start:'));
+    final startPath = startCall.substring('start:'.length);
+    expect(startPath, endsWith('.m4a'),
+        reason: 'AVAudioRecorder infers its container format from the '
+            'path extension -- anything other than a real audio '
+            'extension (e.g. .tmp) yields an unparseable recording');
+
+    await tester.runAsync(() async {
+      await tester.tap(find.byKey(const ValueKey('rec-stop-ur')));
+      await tester.pump();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    final board = readBoard(tester);
+    final eat = board.categories.first.cards.firstWhere((c) => c.id == 'eat');
+    expect(eat.recordings['ur'], 'recordings/eat_ur.m4a');
+  });
+
   testWidgets('play button plays the recording; delete removes it',
       (tester) async {
     await pumpParentWithRecording(tester);
@@ -178,7 +211,7 @@ void main() {
     final leftoverTmp = recordingsDir.existsSync()
         ? recordingsDir
             .listSync()
-            .where((f) => f.path.endsWith('.tmp'))
+            .where((f) => f.path.endsWith('.tmp.m4a'))
             .toList()
         : const <FileSystemEntity>[];
     expect(leftoverTmp, isEmpty);

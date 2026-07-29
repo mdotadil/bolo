@@ -71,7 +71,7 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
 
   /// Stops a mic left running when the sheet closes by any route other than
   /// an explicit save. Cancels the ticker, stops the recorder, best-effort
-  /// deletes the orphaned .tmp file, and deliberately never calls
+  /// deletes the orphaned .tmp.m4a file, and deliberately never calls
   /// setRecording — close-while-recording is a cancel, not a save. Safe to
   /// call with nothing active (no-op) and safe to call from dispose() since
   /// it never touches `ref`, `context`, or setState.
@@ -109,7 +109,14 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
     if (!await recorder.hasPermission()) return;
     final docs = ref.read(docsDirProvider);
     Directory('${docs.path}/recordings').createSync(recursive: true);
-    final tmpPath = '${docs.path}/recordings/${widget.card.id}_$lang.m4a.tmp';
+    // Extension MUST stay a valid audio container: on iOS, AVAudioRecorder
+    // infers the output container format from the URL's path extension
+    // (record_ios calls AVAudioRecorder(url:settings:) directly), so a
+    // `.tmp` extension produces an unparseable file even though the bytes
+    // get renamed to `.m4a` afterward. `.tmp.m4a` keeps the tmp-then-rename
+    // safety net while giving the recorder a real `.m4a` extension to work
+    // with. Android is unaffected (MediaRecorder takes an explicit format).
+    final tmpPath = '${docs.path}/recordings/${widget.card.id}_$lang.tmp.m4a';
     await recorder.start(tmpPath);
     if (!mounted) return;
     _activeRecorder = recorder;
@@ -134,7 +141,7 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
     if (!mounted) return;
     setState(() => _recordingLang = null);
     if (tmpPath == null) return;
-    final finalPath = tmpPath.replaceFirst(RegExp(r'\.tmp$'), '');
+    final finalPath = tmpPath.replaceFirst(RegExp(r'\.tmp\.m4a$'), '.m4a');
     try {
       File(tmpPath).renameSync(finalPath);
     } catch (_) {
