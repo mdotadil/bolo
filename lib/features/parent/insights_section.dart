@@ -1,6 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../models/board.dart';
+import '../../services/app_channel.dart';
+import '../../services/insights_pdf.dart';
+import '../../services/settings_store.dart';
 import '../../services/telemetry_service.dart';
 import '../../services/usage_store.dart';
 import '../../theme.dart';
@@ -21,6 +26,22 @@ class _InsightsSectionState extends ConsumerState<InsightsSection> {
     super.initState();
     // Insights shown to the parent — once per mount, no-op in sideload.
     ref.read(telemetryProvider).log(ParentEvent.insightsViewed);
+  }
+
+  bool get _exportUnlocked =>
+      appChannel == AppChannel.sideload ||
+      (ref.watch(settingsProvider).value?.supporterUnlocked ?? false);
+
+  Future<void> _export(Board board) async {
+    final usage = await ref.read(usageStoreProvider).load();
+    final bytes = await buildInsightsPdf(usage, board);
+    final now = DateTime.now();
+    final file = File('${Directory.systemTemp.path}/bolo-insights-'
+        '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}.pdf');
+    file.writeAsBytesSync(bytes);
+    await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
   }
 
   @override
@@ -82,6 +103,26 @@ class _InsightsSectionState extends ConsumerState<InsightsSection> {
                 const SizedBox(height: 8),
                 Text('New words (14 days): ${newWords.join(', ')}'),
               ],
+              const SizedBox(height: 8),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: _exportUnlocked
+                    ? OutlinedButton.icon(
+                        key: const ValueKey('insights-export'),
+                        icon: const Icon(Icons.picture_as_pdf_outlined),
+                        label: const Text('Export PDF for therapist'),
+                        onPressed: () => _export(board),
+                      )
+                    : OutlinedButton.icon(
+                        key: const ValueKey('insights-export'),
+                        icon: const Icon(Icons.lock_outline),
+                        label: const Text('Export PDF (supporter)'),
+                        onPressed: () => ScaffoldMessenger.of(context)
+                            .showSnackBar(const SnackBar(
+                                content: Text(
+                                    'Unlock the report export in "Support Bolo" below.'))),
+                      ),
+              ),
             ],
           );
         },

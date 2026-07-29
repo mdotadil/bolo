@@ -12,6 +12,7 @@ import 'firebase_options.dart';
 import 'services/app_channel.dart';
 import 'services/audio_recorder.dart';
 import 'services/board_store.dart';
+import 'services/purchase_service.dart';
 import 'services/recording_player.dart';
 import 'services/settings_store.dart';
 import 'services/speech_service.dart';
@@ -53,8 +54,10 @@ Future<void> main() async {
       recordingPlayerProvider.overrideWithValue(AudioplayersRecordingPlayer()),
       recorderProvider.overrideWithValue(RecordPackageRecorder()),
       settingsStoreProvider.overrideWithValue(settingsStore),
+      if (appChannel == AppChannel.store)
+        purchaseGatewayProvider.overrideWithValue(InAppPurchaseGateway()),
     ],
-    child: const _LifecycleFlush(child: BoloApp()),
+    child: const _LifecycleFlush(child: _PurchaseBootstrap(child: BoloApp())),
   ));
 }
 
@@ -80,6 +83,29 @@ class _LifecycleFlushState extends ConsumerState<_LifecycleFlush> {
   void dispose() {
     _listener.dispose();
     super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// Store channel: subscribe to the purchase stream from boot so the store
+/// can redeliver pending/unacknowledged purchases. Inert in sideload.
+class _PurchaseBootstrap extends ConsumerStatefulWidget {
+  const _PurchaseBootstrap({required this.child});
+  final Widget child;
+  @override
+  ConsumerState<_PurchaseBootstrap> createState() =>
+      _PurchaseBootstrapState();
+}
+
+class _PurchaseBootstrapState extends ConsumerState<_PurchaseBootstrap> {
+  @override
+  void initState() {
+    super.initState();
+    if (appChannel == AppChannel.store) {
+      ref.read(purchaseServiceProvider).start();
+    }
   }
 
   @override

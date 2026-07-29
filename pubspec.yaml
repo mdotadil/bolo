@@ -44,6 +44,8 @@ dependencies:
   firebase_core: ^4.12.1
   firebase_crashlytics: ^5.2.6
   firebase_analytics: ^12.4.5
+  in_app_purchase: ^3.3.0
+  pdf: ^3.13.0
 
 dev_dependencies:
   flutter_test:

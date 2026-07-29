@@ -15,6 +15,7 @@ import '../board/board_providers.dart';
 import 'add_card_sheet.dart';
 import 'insights_section.dart';
 import 'record_sheet.dart';
+import 'supporter_section.dart';
 import 'type_to_speak.dart';
 
 enum ReorderAction { mainReorder, moreReorder, moveToMore, moveToMain, none }
@@ -263,6 +264,12 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                         .setAnalyticsCollectionEnabled(v);
                   },
                 ),
+              ),
+            if (appChannel == AppChannel.store)
+              const Padding(
+                padding:
+                    EdgeInsetsDirectional.symmetric(horizontal: 12),
+                child: SupporterSection(),
               ),
           ]);
         },
