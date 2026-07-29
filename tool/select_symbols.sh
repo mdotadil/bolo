@@ -73,3 +73,6 @@ for pair in $MAP; do
 done
 [ -n "$MISSING" ] && echo "MISSING:$MISSING — pick manually from $SVG_DIR" && exit 1
 echo "All 27 symbols copied."
+
+# flutter_svg has no CSS support: inline any Mulberry <style> classes so symbols don't render solid black.
+python3 tool/inline_svg_styles.py assets/symbols/*.svg
