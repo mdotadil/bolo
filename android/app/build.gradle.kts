@@ -7,6 +7,16 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase config files (google-services.json / GoogleService-Info.plist)
+// are committed on purpose: they contain NO secrets — the same values ship
+// inside every APK anyway, and the API keys are restricted in GCP.
+// Conditional apply keeps every build green until BRA-45 lands the real
+// project config; once google-services.json exists the plugins activate.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 val keystoreProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) load(FileInputStream(f))

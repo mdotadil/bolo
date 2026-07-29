@@ -9,6 +9,17 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # Exclude the build output directory. Firebase's iOS SwiftPM-enabled
+  # plugins (firebase_core/crashlytics/analytics) cause `flutter pub get`
+  # to vendor a full local copy of each package (including its own
+  # example/ and test/ dirs) under build/ios/SourcePackages/ for local
+  # SPM resolution. Without this exclude, `flutter analyze` sweeps those
+  # vendored copies in and reports errors that have nothing to do with
+  # this project's own source.
+  exclude:
+    - build/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
