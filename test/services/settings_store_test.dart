@@ -41,6 +41,17 @@ void main() {
     expect(File('${tmp.path}/settings.json.corrupt').existsSync(), isTrue);
   });
 
+  test(
+      'valid JSON with wrong-typed values is treated as corrupt: '
+      'defaults returned, no throw, file quarantined', () async {
+    File('${tmp.path}/settings.json')
+        .writeAsStringSync('{"telemetryEnabled": "false", "supporterUnlocked": 1}');
+    final s = await SettingsStore(tmp).load();
+    expect(s.telemetryEnabled, isTrue);
+    expect(s.supporterUnlocked, isFalse);
+    expect(File('${tmp.path}/settings.json.corrupt').existsSync(), isTrue);
+  });
+
   test('notifier loads, mutates, persists', () async {
     final container = ProviderContainer(overrides: [
       settingsStoreProvider.overrideWithValue(SettingsStore(tmp)),
