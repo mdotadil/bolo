@@ -31,11 +31,14 @@ class MorePage extends ConsumerWidget {
             return Column(children: [
               Align(
                 alignment: AlignmentDirectional.topStart,
-                child: IconButton(
-                  key: const ValueKey('more-back'),
-                  icon: const Icon(Icons.arrow_back,
-                      color: BoloTheme.text, size: 32),
-                  onPressed: () => Navigator.of(context).pop(),
+                child: Semantics(
+                  identifier: 'more-back',
+                  child: IconButton(
+                    key: const ValueKey('more-back'),
+                    icon: const Icon(Icons.arrow_back,
+                        color: BoloTheme.text, size: 32),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                 ),
               ),
               Expanded(

@@ -122,3 +122,67 @@ jobs:
           name: app-debug
           path: build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 30
+
+  # Store-channel proof + AAB. The `build` job above is the sideload family
+  # pipeline and stays unchanged; the guard tests ride its `flutter test`.
+  store-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.2
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Store-channel widget proof
+        run: flutter test --dart-define=BOLO_CHANNEL=store test/features/channel_test.dart
+
+      - name: Check for release signing secrets
+        id: signing_check
+        env:
+          HAS_SECRETS: ${{ secrets.KEYSTORE_BASE64 != '' && secrets.KEYSTORE_PASSWORD != '' }}
+        run: echo "has_secrets=$HAS_SECRETS" >> "$GITHUB_OUTPUT"
+
+      - name: Set up release signing
+        if: steps.signing_check.outputs.has_secrets == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          KEYSTORE_PATH="$RUNNER_TEMP/bolo-release.keystore"
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          cat > android/key.properties <<EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEYSTORE_PASSWORD
+          keyAlias=${KEY_ALIAS:-bolo}
+          storeFile=$KEYSTORE_PATH
+          EOF
+
+      - name: Build store AAB (release)
+        if: steps.signing_check.outputs.has_secrets == 'true'
+        run: flutter build appbundle --release --dart-define=BOLO_CHANNEL=store
+
+      - name: Build store AAB (debug fallback)
+        if: steps.signing_check.outputs.has_secrets != 'true'
+        run: flutter build appbundle --debug --dart-define=BOLO_CHANNEL=store
+
+      - name: Upload store AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: bolo-store-aab
+          path: build/app/outputs/bundle/*/app-*.aab
+          retention-days: 30
