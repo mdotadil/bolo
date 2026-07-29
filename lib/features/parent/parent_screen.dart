@@ -12,6 +12,7 @@ import '../../services/backup_service.dart';
 import '../../services/settings_store.dart';
 import '../../services/telemetry_service.dart';
 import '../board/board_providers.dart';
+import 'about_page.dart';
 import 'add_card_sheet.dart';
 import 'insights_section.dart';
 import 'record_sheet.dart';
@@ -181,6 +182,19 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                   ),
                 ),
               ]),
+            ),
+            Padding(
+              padding: const EdgeInsetsDirectional.all(12),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: OutlinedButton.icon(
+                  key: const ValueKey('about-privacy'),
+                  icon: const Icon(Icons.privacy_tip_outlined),
+                  label: const Text('About and privacy'),
+                  onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AboutPage())),
+                ),
+              ),
             ),
             if (appChannel == AppChannel.store)
               Padding(
