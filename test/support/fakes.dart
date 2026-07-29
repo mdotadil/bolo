@@ -5,6 +5,16 @@ import 'package:bolo/services/speech_service.dart';
 /// Shared test fakes for the TTS/recording/playback seams. Kept in one place
 /// so widget and provider tests don't grow their own copy-pasted variant
 /// every time the `Tts`/`Recorder`/`RecordingPlayer` interfaces gain a member.
+///
+/// Standard `ParentScreen` override set (see `parent_screen_test.dart` and
+/// `diagnostics_toggle_test.dart`): boardStoreProvider, ttsProvider,
+/// recordingPlayerProvider, recorderProvider, docsDirProvider, and — as of
+/// the store-channel bootstrap (Task 18) — `settingsStoreProvider.overrideWithValue(SettingsStore(tmp))`.
+/// `settingsProvider` is only ever watched behind the store-channel
+/// `appChannel == AppChannel.store` branch (the diagnostics toggle), but the
+/// override belongs in every pump helper so the same helpers pump cleanly
+/// under both the sideload suite here and the store-channel twin in
+/// Task 21's `channel_test.dart`.
 class FakeTts implements Tts {
   final calls = <String>[];
 

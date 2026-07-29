@@ -8,6 +8,7 @@ import 'package:bolo/features/parent/record_sheet.dart';
 import 'package:bolo/models/board.dart';
 import 'package:bolo/services/board_store.dart';
 import 'package:bolo/services/recording_player.dart';
+import 'package:bolo/services/settings_store.dart';
 import '../support/fakes.dart';
 
 const _json =
@@ -30,6 +31,7 @@ void main() {
         ttsProvider.overrideWithValue(tts),
         recordingPlayerProvider.overrideWithValue(FakePlayer()),
         docsDirProvider.overrideWithValue(tmp),
+        settingsStoreProvider.overrideWithValue(SettingsStore(tmp)),
       ], child: const MaterialApp(home: ParentScreen()));
 
   testWidgets('lists all cards of the category including hidden toggles',
@@ -108,6 +110,7 @@ void main() {
         ttsProvider.overrideWithValue(tts),
         recordingPlayerProvider.overrideWithValue(FakePlayer()),
         docsDirProvider.overrideWithValue(tmp),
+        settingsStoreProvider.overrideWithValue(SettingsStore(tmp)),
       ],
       child: const MaterialApp(home: ParentScreen()),
     ));

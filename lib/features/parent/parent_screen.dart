@@ -1,11 +1,15 @@
 import 'dart:io';
 import 'package:file_selector/file_selector.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../models/board.dart';
+import '../../services/app_channel.dart';
 import '../../services/backup_service.dart';
+import '../../services/settings_store.dart';
 import '../board/board_providers.dart';
 import 'add_card_sheet.dart';
 import 'insights_section.dart';
@@ -223,6 +227,32 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                 ),
               ]),
             ),
+            if (appChannel == AppChannel.store)
+              Padding(
+                padding:
+                    const EdgeInsetsDirectional.symmetric(horizontal: 12),
+                child: SwitchListTile(
+                  key: const ValueKey('diagnostics-toggle'),
+                  contentPadding: EdgeInsetsDirectional.zero,
+                  title: const Text('Share anonymous diagnostics'),
+                  subtitle: const Text(
+                      'Crash reports and parent-mode feature counts. Never her words, recordings, or photos.'),
+                  value:
+                      ref.watch(settingsProvider).value?.telemetryEnabled ??
+                          true,
+                  onChanged: (v) async {
+                    await ref
+                        .read(settingsProvider.notifier)
+                        .setTelemetryEnabled(v);
+                    // Safe: this branch only renders in the store channel,
+                    // where main() has initialized Firebase.
+                    await FirebaseCrashlytics.instance
+                        .setCrashlyticsCollectionEnabled(v);
+                    await FirebaseAnalytics.instance
+                        .setAnalyticsCollectionEnabled(v);
+                  },
+                ),
+              ),
           ]);
         },
       ),
