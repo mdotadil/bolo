@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:bolo/services/purchase_service.dart';
+import 'package:bolo/services/settings_store.dart';
+import 'package:bolo/services/telemetry_service.dart';
 
 class FakeGateway implements PurchaseGateway {
   final controller = StreamController<List<PurchaseDetails>>();
@@ -129,5 +133,68 @@ void main() {
   test('restore delegates to the gateway', () async {
     await service.restore();
     expect(gateway.calls, contains('restore'));
+  });
+
+  group('purchaseServiceProvider telemetry dedup (real Riverpod wiring)', () {
+    // The dedup check reads settingsProvider, which PurchaseService itself
+    // has no access to — so these exercise the actual provider wiring in
+    // purchase_service.dart, not the raw PurchaseService class above.
+    late Directory tmp;
+    late FakeGateway providerGateway;
+    late List<String> sentEvents;
+    late ProviderContainer container;
+
+    setUp(() {
+      tmp = Directory.systemTemp.createTempSync('bolo_purchase_provider');
+      providerGateway = FakeGateway();
+      sentEvents = [];
+      container = ProviderContainer(overrides: [
+        purchaseGatewayProvider.overrideWithValue(providerGateway),
+        settingsStoreProvider.overrideWithValue(SettingsStore(tmp)),
+        telemetryProvider.overrideWithValue(TelemetryService(
+            send: (name, params) async => sentEvents.add(name))),
+      ]);
+    });
+    tearDown(() {
+      container.dispose();
+      providerGateway.controller.close();
+      tmp.deleteSync(recursive: true);
+    });
+
+    Future<void> emit(PurchaseDetails p) async {
+      providerGateway.controller.add([p]);
+      // Unlike the raw-class tests above, onUnlocked here does real
+      // settings.json disk I/O (SettingsStore.save) via the provider
+      // wiring, so a zero-duration delay isn't enough to let it settle.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+
+    test(
+        'a redelivered purchased transaction unlocks idempotently but logs '
+        'telemetry exactly once', () async {
+      await container.read(settingsProvider.future); // settings loaded
+      container.read(purchaseServiceProvider).start();
+
+      await emit(purchase(supporterProductId, PurchaseStatus.purchased));
+      await emit(
+          purchase(supporterProductId, PurchaseStatus.purchased)); // redelivered
+
+      expect(
+          container.read(settingsProvider).value?.supporterUnlocked, isTrue);
+      expect(sentEvents.where((e) => e == 'supporter_purchased').length, 1);
+    });
+
+    test('restoring when already unlocked logs zero supporterRestored events',
+        () async {
+      await SettingsStore(tmp).save(const Settings(supporterUnlocked: true));
+      await container.read(settingsProvider.future); // loads pre-seeded state
+      container.read(purchaseServiceProvider).start();
+
+      await emit(purchase(supporterProductId, PurchaseStatus.restored));
+
+      expect(
+          container.read(settingsProvider).value?.supporterUnlocked, isTrue);
+      expect(sentEvents.where((e) => e == 'supporter_restored'), isEmpty);
+    });
   });
 }

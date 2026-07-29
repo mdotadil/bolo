@@ -103,7 +103,15 @@ final purchaseServiceProvider = Provider<PurchaseService>((ref) {
   final service = PurchaseService(
     ref.watch(purchaseGatewayProvider),
     onUnlocked: ({required bool restored}) async {
+      // Read BEFORE writing: the store redelivers uncompleted/unacknowledged
+      // purchases (failed completePurchase, next-launch replay), and Restore
+      // re-delivers every non-consumable the account owns even when already
+      // unlocked on this phone. The entitlement write below is idempotent and
+      // stays unconditional; only the telemetry log must not double-count.
+      final alreadyUnlocked =
+          ref.read(settingsProvider).value?.supporterUnlocked ?? false;
       await ref.read(settingsProvider.notifier).setSupporterUnlocked(true);
+      if (alreadyUnlocked) return;
       await ref.read(telemetryProvider).log(restored
           ? ParentEvent.supporterRestored
           : ParentEvent.supporterPurchased);
