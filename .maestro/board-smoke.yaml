@@ -13,14 +13,6 @@ appId: com.mdotadil.bolo
 - assertVisible: "eat"
 - tapOn: "eat"          # speaks; no navigation
 - assertVisible: "eat"
-# More page: fixed last tile opens a static page; back returns
-- tapOn: "More…"
-- assertVisible: "I want to eat"
-- tapOn: "I want to eat"
-- assertVisible: "I want to eat"
-- tapOn:
-    id: "more-back"
-- assertVisible: "eat"
 - longPressOn:
     id: "grownup-gate"
 - assertVisible: "Parent mode"

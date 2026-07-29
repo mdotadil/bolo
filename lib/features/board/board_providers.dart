@@ -49,19 +49,13 @@ class BoardNotifier extends AsyncNotifier<Board> {
 
   Board get _board => state.value!;
 
-  /// Applies [change] to the card with [cardId] wherever it lives —
-  /// main page or More page.
+  /// Applies [change] to the card with [cardId], wherever its category is.
   Future<void> _mapCard(String cardId, SymbolCard Function(SymbolCard) change) {
     return _update(_board.copyWith(categories: [
       for (final cat in _board.categories)
-        cat.copyWith(
-          cards: [
-            for (final c in cat.cards) c.id == cardId ? change(c) : c
-          ],
-          moreCards: [
-            for (final c in cat.moreCards) c.id == cardId ? change(c) : c
-          ],
-        )
+        cat.copyWith(cards: [
+          for (final c in cat.cards) c.id == cardId ? change(c) : c
+        ])
     ]));
   }
 
@@ -86,38 +80,11 @@ class BoardNotifier extends AsyncNotifier<Board> {
         return c.copyWith(labels: labels);
       });
 
-  Future<void> moveCardToPage(String categoryId, String cardId,
-      {required bool toMore}) {
+  Future<void> reorderCard(String categoryId, int oldIndex, int newIndex) {
     return _update(_board.copyWith(categories: [
       for (final cat in _board.categories)
         if (cat.id != categoryId)
           cat
-        else
-          _moveInCategory(cat, cardId, toMore: toMore)
-    ]));
-  }
-
-  BoardCategory _moveInCategory(BoardCategory cat, String cardId,
-      {required bool toMore}) {
-    final source = toMore ? cat.cards : cat.moreCards;
-    final idx = source.indexWhere((c) => c.id == cardId);
-    if (idx < 0) return cat;
-    final card = source[idx];
-    final newSource = [...source]..removeAt(idx);
-    if (toMore) {
-      return cat.copyWith(cards: newSource, moreCards: [...cat.moreCards, card]);
-    }
-    return cat.copyWith(cards: [...cat.cards, card], moreCards: newSource);
-  }
-
-  Future<void> reorderCard(String categoryId, int oldIndex, int newIndex,
-      {bool inMore = false}) {
-    return _update(_board.copyWith(categories: [
-      for (final cat in _board.categories)
-        if (cat.id != categoryId)
-          cat
-        else if (inMore)
-          cat.copyWith(moreCards: _moved(cat.moreCards, oldIndex, newIndex))
         else
           cat.copyWith(cards: _moved(cat.cards, oldIndex, newIndex))
     ]));
@@ -133,8 +100,7 @@ class BoardNotifier extends AsyncNotifier<Board> {
   Future<void> addCustomCard(
       {required String categoryId,
       required String label,
-      required String photoPath,
-      bool toMorePage = false}) {
+      required String photoPath}) {
     final card = SymbolCard(
       id: 'custom-${DateTime.now().microsecondsSinceEpoch}',
       labels: {'en': label},
@@ -144,8 +110,6 @@ class BoardNotifier extends AsyncNotifier<Board> {
       for (final cat in _board.categories)
         if (cat.id != categoryId)
           cat
-        else if (toMorePage)
-          cat.copyWith(moreCards: [...cat.moreCards, card])
         else
           cat.copyWith(cards: [...cat.cards, card])
     ]));

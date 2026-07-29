@@ -12,8 +12,8 @@ const _json =
     '{"speechRate":0.45,"categories":['
     '{"id":"wants","names":{"en":"Wants"},"cards":['
     '{"id":"eat","labels":{"en":"eat","ur":"کھانا"}},'
-    '{"id":"drink","labels":{"en":"drink"},"hidden":true}],'
-    '"moreCards":[{"id":"phrase-1","labels":{"en":"I need the toilet","ur":"مجھے ٹوائلٹ جانا ہے"}}]},'
+    '{"id":"drink","labels":{"en":"drink"},"hidden":true},'
+    '{"id":"phrase-1","labels":{"en":"I need the toilet","ur":"مجھے ٹوائلٹ جانا ہے"}}]},'
     '{"id":"help","names":{"en":"Help"},"cards":[{"id":"help","labels":{"en":"help me"}}]}]}';
 
 void main() {
@@ -26,19 +26,16 @@ void main() {
   });
   tearDown(() => tmp.deleteSync(recursive: true));
 
-  Widget app({bool categoryWithoutMore = false}) => ProviderScope(overrides: [
+  Widget app() => ProviderScope(overrides: [
         boardStoreProvider.overrideWithValue(
             BoardStore(tmp, loadDefault: () async => _json)),
         ttsProvider.overrideWithValue(tts),
         recordingPlayerProvider.overrideWithValue(FakePlayer()),
         docsDirProvider.overrideWithValue(tmp),
-        if (categoryWithoutMore)
-          selectedCategoryProvider.overrideWith((ref) => 1),
       ], child: const MaterialApp(home: BoardScreen()));
 
-  Future<void> pumpBoard(WidgetTester tester,
-      {bool categoryWithoutMore = false}) async {
-    await tester.pumpWidget(app(categoryWithoutMore: categoryWithoutMore));
+  Future<void> pumpBoard(WidgetTester tester) async {
+    await tester.pumpWidget(app());
     await tester.pumpAndSettle();
   }
 
@@ -65,21 +62,10 @@ void main() {
     expect(find.text('eat'), findsNothing);
   });
 
-  testWidgets('More tile shows as the last tile when moreCards exist',
+  testWidgets('former More-page card is listed directly in the grid',
       (tester) async {
     await pumpBoard(tester);
-    expect(find.byKey(const ValueKey('more-tile')), findsOneWidget);
-  });
-
-  testWidgets('tapping More opens the static More page and back returns',
-      (tester) async {
-    await pumpBoard(tester);
-    await tester.tap(find.byKey(const ValueKey('more-tile')));
-    await tester.pump(); // zero-duration route: one pump, no settle needed
     expect(find.text('I need the toilet'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('more-back')));
-    await tester.pump();
-    expect(find.text('I need the toilet'), findsNothing);
   });
 
   // BoardStore.save() does real dart:io file I/O; a plain testWidgets body
@@ -100,12 +86,5 @@ void main() {
 
     await tester.pump();
     expect(find.text('کھانا'), findsOneWidget); // the ur label from the fixture
-  });
-
-  testWidgets('More tile absent when category has no visible more cards',
-      (tester) async {
-    // fixture's 'help' category (index 1) has no moreCards
-    await pumpBoard(tester, categoryWithoutMore: true);
-    expect(find.byKey(const ValueKey('more-tile')), findsNothing);
   });
 }

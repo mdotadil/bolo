@@ -18,32 +18,6 @@ import 'record_sheet.dart';
 import 'supporter_section.dart';
 import 'type_to_speak.dart';
 
-enum ReorderAction { mainReorder, moreReorder, moveToMore, moveToMain, none }
-
-/// Translates ReorderableListView indices over the combined
-/// [main..., divider, more...] children list into a section-level action.
-/// Returns (action, oldIndex, newIndex) in SECTION-LOCAL indices.
-(ReorderAction, int, int) translateReorder(
-    int mainCount, int oldIndex, int newIndex) {
-  final divider = mainCount;
-  if (oldIndex == divider) return (ReorderAction.none, 0, 0);
-  final fromMain = oldIndex < divider;
-  // onReorderItem semantics: newIndex is already adjusted for removal.
-  final toMain = newIndex <= divider - (fromMain ? 1 : 0);
-  if (fromMain && toMain) return (ReorderAction.mainReorder, oldIndex, newIndex);
-  if (!fromMain && !toMain) {
-    return (
-      ReorderAction.moreReorder,
-      oldIndex - divider - 1,
-      newIndex - divider - 1,
-    );
-  }
-  if (fromMain) {
-    return (ReorderAction.moveToMore, oldIndex, 0);
-  }
-  return (ReorderAction.moveToMain, oldIndex - divider - 1, newIndex);
-}
-
 class ParentScreen extends ConsumerStatefulWidget {
   const ParentScreen({super.key});
   @override
@@ -140,42 +114,11 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
             ReorderableListView(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              onReorderItem: (oldIndex, newIndex) {
-                final n = ref.read(boardNotifierProvider.notifier);
-                final (action, from, to) = translateReorder(
-                    category.cards.length, oldIndex, newIndex);
-                switch (action) {
-                  case ReorderAction.mainReorder:
-                    n.reorderCard(category.id, from, to);
-                  case ReorderAction.moreReorder:
-                    n.reorderCard(category.id, from, to, inMore: true);
-                  case ReorderAction.moveToMore:
-                    n.moveCardToPage(category.id,
-                        category.cards[from].id, toMore: true);
-                    ref
-                        .read(telemetryProvider)
-                        .log(ParentEvent.morePageConfigured);
-                  case ReorderAction.moveToMain:
-                    n.moveCardToPage(category.id,
-                        category.moreCards[from].id, toMore: false);
-                    ref
-                        .read(telemetryProvider)
-                        .log(ParentEvent.morePageConfigured);
-                  case ReorderAction.none:
-                    break;
-                }
-              },
+              onReorderItem: (oldIndex, newIndex) => ref
+                  .read(boardNotifierProvider.notifier)
+                  .reorderCard(category.id, oldIndex, newIndex),
               children: [
                 for (final card in category.cards)
-                  _cardRow(board, card),
-                const ListTile(
-                  key: ValueKey('more-divider'),
-                  dense: true,
-                  title: Text('— More page —',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12)),
-                ),
-                for (final card in category.moreCards)
                   _cardRow(board, card),
               ],
             ),

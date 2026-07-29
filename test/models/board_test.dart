@@ -44,17 +44,15 @@ void main() {
     const cat = BoardCategory(
         id: 'wants',
         names: {'en': 'Wants'},
-        cards: [card],
-        moreCards: [SymbolCard(id: 'p1', labels: {'en': 'I need the toilet'})]);
+        cards: [card]);
     const board = Board(
         speechRate: 0.45,
         categories: [cat],
         activeLanguage: 'ur');
 
     final decoded = Board.fromJson(board.toJson());
-    expect(decoded.version, 2);
+    expect(decoded.version, 3);
     expect(decoded.activeLanguage, 'ur');
-    expect(decoded.categories.single.moreCards.single.id, 'p1');
     expect(decoded.categories.single.cards.single.recordings['ur'],
         'recordings/eat_ur.m4a');
   });
@@ -68,9 +66,8 @@ void main() {
         ]}
       ]
     });
-    expect(board.version, 2); // fromJson always normalizes to current version
+    expect(board.version, 3); // fromJson always normalizes to current version
     expect(board.activeLanguage, 'en');
-    expect(board.categories.single.moreCards, isEmpty);
     expect(board.categories.single.cards.single.recordings, isEmpty);
   });
 

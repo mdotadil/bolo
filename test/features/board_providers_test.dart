@@ -11,8 +11,7 @@ import '../support/fakes.dart';
 const _defaultJson =
     '{"speechRate":0.45,"categories":[{"id":"wants","names":{"en":"Wants"},"cards":['
     '{"id":"eat","labels":{"en":"eat"},"symbolAsset":"assets/symbols/eat.svg"},'
-    '{"id":"drink","labels":{"en":"drink"},"symbolAsset":"assets/symbols/drink.svg"}],'
-    '"moreCards":[{"id":"phrase-1","labels":{"en":"I need the toilet"}}]}]}';
+    '{"id":"drink","labels":{"en":"drink"},"symbolAsset":"assets/symbols/drink.svg"}]}]}';
 
 const _threeCardJson =
     '{"speechRate":0.45,"categories":[{"id":"wants","names":{"en":"Wants"},"cards":['
@@ -166,16 +165,16 @@ void main() {
     expect(reloaded.activeLanguage, 'ur');
   });
 
-  test('setRecording/removeRecording reach cards on both pages', () async {
+  test('setRecording/removeRecording reach any card in the category', () async {
     final n = container.read(boardNotifierProvider.notifier);
     await container.read(boardNotifierProvider.future);
     await n.setRecording('eat', 'ur', 'recordings/eat_ur.m4a');
-    await n.setRecording('phrase-1', 'en', 'recordings/phrase-1_en.m4a');
+    await n.setRecording('drink', 'en', 'recordings/drink_en.m4a');
     var board = container.read(boardNotifierProvider).value!;
     expect(board.categories.first.cards.firstWhere((c) => c.id == 'eat')
         .recordings['ur'], 'recordings/eat_ur.m4a');
-    expect(board.categories.first.moreCards.single.recordings['en'],
-        'recordings/phrase-1_en.m4a');
+    expect(board.categories.first.cards.firstWhere((c) => c.id == 'drink')
+        .recordings['en'], 'recordings/drink_en.m4a');
     await n.removeRecording('eat', 'ur');
     board = container.read(boardNotifierProvider).value!;
     expect(board.categories.first.cards.firstWhere((c) => c.id == 'eat')
@@ -190,45 +189,6 @@ void main() {
     final eat = board.categories.first.cards.firstWhere((c) => c.id == 'eat');
     expect(eat.labels['ur'], 'کھانا کھانا');
     expect(eat.labels['en'], 'eat'); // untouched
-  });
-
-  test('moveCardToPage moves between main and more, appending at end', () async {
-    final n = container.read(boardNotifierProvider.notifier);
-    await container.read(boardNotifierProvider.future);
-    final catId = container
-        .read(boardNotifierProvider).value!.categories.first.id;
-    await n.moveCardToPage(catId, 'eat', toMore: true);
-    var cat = container.read(boardNotifierProvider).value!.categories.first;
-    expect(cat.cards.any((c) => c.id == 'eat'), isFalse);
-    expect(cat.moreCards.last.id, 'eat');
-    await n.moveCardToPage(catId, 'eat', toMore: false);
-    cat = container.read(boardNotifierProvider).value!.categories.first;
-    expect(cat.cards.last.id, 'eat');
-  });
-
-  test('reorderCard inMore reorders the More page only', () async {
-    final n = container.read(boardNotifierProvider.notifier);
-    await container.read(boardNotifierProvider.future);
-    final catId = container
-        .read(boardNotifierProvider).value!.categories.first.id;
-    await n.moveCardToPage(catId, 'eat', toMore: true); // more: [phrase-1, eat]
-    await n.reorderCard(catId, 1, 0, inMore: true);
-    final cat = container.read(boardNotifierProvider).value!.categories.first;
-    expect([for (final c in cat.moreCards) c.id], ['eat', 'phrase-1']);
-  });
-
-  test('addCustomCard toMorePage lands on the More page', () async {
-    final n = container.read(boardNotifierProvider.notifier);
-    await container.read(boardNotifierProvider.future);
-    final catId = container
-        .read(boardNotifierProvider).value!.categories.first.id;
-    await n.addCustomCard(
-        categoryId: catId,
-        label: 'blanket',
-        photoPath: '/tmp/b.jpg',
-        toMorePage: true);
-    final cat = container.read(boardNotifierProvider).value!.categories.first;
-    expect(cat.moreCards.last.labels['en'], 'blanket');
   });
 
   test('speakAndCount speaks and buffers a usage tap', () async {

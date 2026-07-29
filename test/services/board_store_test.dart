@@ -14,6 +14,18 @@ const _v1Json =
     '{"id":"eat","labels":{"en":"eat"},"hidden":true},'
     '{"id":"custom-1","labels":{"en":"blanket"},"photoPath":"/old/photos/b.jpg"}]}]}';
 
+// A v2-schema file (as produced by the old More-page feature) that still has
+// its own moreCards array on disk -- the shape of a real existing install
+// (e.g. board.json on a device that upgraded through v2 before the More
+// page was removed).
+const _v2JsonWithMoreCards =
+    '{"version":2,"speechRate":0.5,"categories":[{"id":"wants","names":{"en":"Wants"},"cards":['
+    '{"id":"eat","labels":{"en":"eat"}},'
+    '{"id":"drink","labels":{"en":"drink"}}],'
+    '"moreCards":['
+    '{"id":"want-eat","labels":{"en":"I want to eat"}},'
+    '{"id":"want-water","labels":{"en":"I want water"}}]}]}';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -50,17 +62,21 @@ void main() {
     expect(store.photosDir.path, '${tmp.path}/photos');
   });
 
-  test('v1 file is migrated: version, all-language merge, moreCards, order preserved', () async {
+  test(
+      'v1 file is migrated: version, all-language merge, former More-page '
+      'phrase cards appended, order preserved', () async {
     File('${tmp.path}/board.json').writeAsStringSync(_v1Json);
     final store = BoardStore(tmp,
         loadDefault: () => rootBundle.loadString('assets/board/default_board.json'));
     final board = await store.load();
 
-    expect(board.version, 2);
+    expect(board.version, 3);
     expect(board.activeLanguage, 'en');
     final wants = board.categories.single;
-    // order and hidden preserved exactly
-    expect([for (final c in wants.cards) c.id], ['more', 'eat', 'custom-1']);
+    // order and hidden preserved exactly; the default's former more-cards
+    // are appended at the end since this file never had any of its own.
+    expect([for (final c in wants.cards) c.id],
+        ['more', 'eat', 'custom-1', 'want-eat', 'want-water']);
     expect(wants.cards[1].hidden, isTrue);
     // ALL FOUR non-English label sets merged onto default cards by id
     expect(wants.cards.first.labels['ur'], 'اور');
@@ -70,13 +86,36 @@ void main() {
     expect(wants.names['ur'], 'خواہش');
     expect(wants.names['ar'], 'الرغبات');
     // custom card untouched — no language keys appear on it
-    expect(wants.cards.last.labels.keys.toList(), ['en']);
-    expect(wants.cards.last.photoPath, '/old/photos/b.jpg');
-    // default More cards added because the category had none
-    expect([for (final c in wants.moreCards) c.id], ['want-eat', 'want-water']);
+    expect(wants.cards[2].labels.keys.toList(), ['en']);
+    expect(wants.cards[2].photoPath, '/old/photos/b.jpg');
     // migrated file persisted
     final raw = jsonDecode(File('${tmp.path}/board.json').readAsStringSync());
-    expect(raw['version'], 2);
+    expect(raw['version'], 3);
+  });
+
+  test(
+      'v2 file with its own moreCards folds them into cards on migration to '
+      'v3, and the moreCards key is dropped', () async {
+    File('${tmp.path}/board.json').writeAsStringSync(_v2JsonWithMoreCards);
+    final store = BoardStore(tmp,
+        loadDefault: () => rootBundle.loadString('assets/board/default_board.json'));
+    final board = await store.load();
+
+    expect(board.version, 3);
+    final wants = board.categories.single;
+    // The file's own moreCards win and are folded in, appended at the end,
+    // in order -- nothing is lost, and the default's backfill never kicks
+    // in on top of them.
+    expect([for (final c in wants.cards) c.id],
+        ['eat', 'drink', 'want-eat', 'want-water']);
+
+    final raw = jsonDecode(File('${tmp.path}/board.json').readAsStringSync())
+        as Map<String, dynamic>;
+    final wantsRaw = (raw['categories'] as List).single as Map<String, dynamic>;
+    expect(raw['version'], 3);
+    expect(wantsRaw.containsKey('moreCards'), isFalse);
+    expect([for (final c in wantsRaw['cards'] as List) (c as Map)['id']],
+        ['eat', 'drink', 'want-eat', 'want-water']);
   });
 
   test('migration is idempotent', () async {

@@ -34,7 +34,6 @@ void main() {
       'language_changed',
       'custom_card_added',
       'recording_created',
-      'more_page_configured',
       'backup_created',
       'backup_restored',
       'insights_viewed',

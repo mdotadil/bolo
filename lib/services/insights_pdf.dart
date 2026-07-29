@@ -11,12 +11,12 @@ Future<Uint8List> buildInsightsPdf(UsageData usage, Board board) async {
   final now = DateTime.now();
   final enLabels = {
     for (final cat in board.categories)
-      for (final card in [...cat.cards, ...cat.moreCards])
+      for (final card in cat.cards)
         card.id: card.labels['en'] ?? card.id,
   };
   final categoryOf = {
     for (final cat in board.categories)
-      for (final card in [...cat.cards, ...cat.moreCards])
+      for (final card in cat.cards)
         card.id: cat.names['en'] ?? cat.id,
   };
 

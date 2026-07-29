@@ -97,7 +97,7 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
     final board = ref.watch(boardNotifierProvider).value;
     if (board == null) return widget.card;
     for (final cat in board.categories) {
-      for (final c in [...cat.cards, ...cat.moreCards]) {
+      for (final c in cat.cards) {
         if (c.id == widget.card.id) return c;
       }
     }

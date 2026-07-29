@@ -96,10 +96,7 @@ class BackupService {
       // Re-anchor photo paths to THIS device's docs dir.
       final reanchored = board.copyWith(categories: [
         for (final cat in board.categories)
-          cat.copyWith(
-            cards: [for (final c in cat.cards) _reanchor(c)],
-            moreCards: [for (final c in cat.moreCards) _reanchor(c)],
-          )
+          cat.copyWith(cards: [for (final c in cat.cards) _reanchor(c)])
       ]);
       File('${staging.path}/board.json')
           .writeAsStringSync(jsonEncode(reanchored.toJson()));

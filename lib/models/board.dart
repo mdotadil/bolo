@@ -60,21 +60,12 @@ class BoardCategory {
   final String id;
   final Map<String, String> names;
   final List<SymbolCard> cards;
-  final List<SymbolCard> moreCards;
 
   const BoardCategory(
-      {required this.id,
-      required this.names,
-      required this.cards,
-      this.moreCards = const []});
+      {required this.id, required this.names, required this.cards});
 
-  BoardCategory copyWith(
-          {List<SymbolCard>? cards, List<SymbolCard>? moreCards}) =>
-      BoardCategory(
-          id: id,
-          names: names,
-          cards: cards ?? this.cards,
-          moreCards: moreCards ?? this.moreCards);
+  BoardCategory copyWith({List<SymbolCard>? cards}) =>
+      BoardCategory(id: id, names: names, cards: cards ?? this.cards);
 
   factory BoardCategory.fromJson(Map<String, dynamic> json) => BoardCategory(
         id: json['id'] as String,
@@ -82,24 +73,17 @@ class BoardCategory {
         cards: (json['cards'] as List)
             .map((c) => SymbolCard.fromJson(c as Map<String, dynamic>))
             .toList(),
-        moreCards: json['moreCards'] == null
-            ? const []
-            : (json['moreCards'] as List)
-                .map((c) => SymbolCard.fromJson(c as Map<String, dynamic>))
-                .toList(),
       );
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'names': names,
         'cards': cards.map((c) => c.toJson()).toList(),
-        if (moreCards.isNotEmpty)
-          'moreCards': moreCards.map((c) => c.toJson()).toList(),
       };
 }
 
 class Board {
-  static const currentVersion = 2;
+  static const currentVersion = 3;
 
   final int version;
   final double speechRate;

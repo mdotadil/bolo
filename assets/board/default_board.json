@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "speechRate": 0.45,
   "activeLanguage": "en",
   "categories": [
@@ -9,8 +9,7 @@
       {"id": "water", "labels": {"en": "water", "ur": "پانی", "ar": "ماء", "fr": "eau", "es": "agua"}, "symbolAsset": "assets/symbols/water.svg"},
       {"id": "snack", "labels": {"en": "snack", "ur": "سنیک", "ar": "سناك", "fr": "goûter", "es": "merienda"}, "symbolAsset": "assets/symbols/snack.svg"},
       {"id": "more", "labels": {"en": "more", "ur": "اور", "ar": "المزيد", "fr": "encore", "es": "más"}, "symbolAsset": "assets/symbols/more.svg"},
-      {"id": "all-done", "labels": {"en": "all done", "ur": "ہو گیا", "ar": "انتهيت", "fr": "fini", "es": "listo"}, "symbolAsset": "assets/symbols/all-done.svg"}
-    ], "moreCards": [
+      {"id": "all-done", "labels": {"en": "all done", "ur": "ہو گیا", "ar": "انتهيت", "fr": "fini", "es": "listo"}, "symbolAsset": "assets/symbols/all-done.svg"},
       {"id": "want-eat", "labels": {"en": "I want to eat", "ur": "مجھے کھانا چاہیے", "ar": "أريد أن آكل", "fr": "je veux manger", "es": "quiero comer"}, "symbolAsset": "assets/symbols/eat.svg"},
       {"id": "want-water", "labels": {"en": "I want water", "ur": "مجھے پانی چاہیے", "ar": "أريد ماء", "fr": "je veux de l'eau", "es": "quiero agua"}, "symbolAsset": "assets/symbols/water.svg"}
     ]},
@@ -41,8 +40,7 @@
       {"id": "help", "labels": {"en": "help me", "ur": "مدد کریں", "ar": "ساعدني", "fr": "aide-moi", "es": "ayúdame"}, "symbolAsset": "assets/symbols/help.svg"},
       {"id": "come-here", "labels": {"en": "come here", "ur": "یہاں آئیں", "ar": "تعال هنا", "fr": "viens ici", "es": "ven aquí"}, "symbolAsset": "assets/symbols/come-here.svg"},
       {"id": "hug", "labels": {"en": "hug", "ur": "جپھی", "ar": "حضن", "fr": "câlin", "es": "abrazo"}, "symbolAsset": "assets/symbols/hug.svg"},
-      {"id": "stop", "labels": {"en": "stop", "ur": "رکو", "ar": "توقف", "fr": "stop", "es": "para"}, "symbolAsset": "assets/symbols/stop.svg"}
-    ], "moreCards": [
+      {"id": "stop", "labels": {"en": "stop", "ur": "رکو", "ar": "توقف", "fr": "stop", "es": "para"}, "symbolAsset": "assets/symbols/stop.svg"},
       {"id": "need-toilet", "labels": {"en": "I need the toilet", "ur": "مجھے ٹوائلٹ جانا ہے", "ar": "أحتاج الحمام", "fr": "je dois aller aux toilettes", "es": "necesito ir al baño"}, "symbolAsset": "assets/symbols/toilet.svg"},
       {"id": "help-fast", "labels": {"en": "help me now", "ur": "جلدی مدد کریں", "ar": "ساعدني بسرعة", "fr": "aide-moi vite", "es": "ayúdame rápido"}, "symbolAsset": "assets/symbols/help.svg"}
     ]}

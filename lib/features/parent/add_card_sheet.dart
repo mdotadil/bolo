@@ -6,14 +6,6 @@ import 'photo_picker.dart';
 
 void showAddCardSheet(BuildContext context, WidgetRef ref, String categoryId) {
   final controller = TextEditingController();
-  // Owned OUTSIDE showModalBottomSheet's builder on purpose. The builder
-  // closure below re-runs on any inherited-widget change it reads from
-  // (it calls MediaQuery.viewInsetsOf, so keyboard show/hide alone
-  // re-invokes it) — a `var` declared inside that closure would be
-  // silently recreated as `false` on every such rebuild, discarding the
-  // user's toggle. A ValueNotifier declared here, next to `controller`,
-  // survives every rebuild of the sheet's subtree.
-  final toMore = ValueNotifier<bool>(false);
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -30,16 +22,6 @@ void showAddCardSheet(BuildContext context, WidgetRef ref, String categoryId) {
           autofocus: true,
           decoration: const InputDecoration(labelText: 'Word to speak'),
         ),
-        ValueListenableBuilder<bool>(
-          valueListenable: toMore,
-          builder: (context, value, _) => SwitchListTile(
-            key: const ValueKey('add-card-more-toggle'),
-            contentPadding: EdgeInsetsDirectional.zero,
-            title: const Text('Put on More page'),
-            value: value,
-            onChanged: (v) => toMore.value = v,
-          ),
-        ),
         const SizedBox(height: 16),
         Row(children: [
           Expanded(
@@ -49,7 +31,7 @@ void showAddCardSheet(BuildContext context, WidgetRef ref, String categoryId) {
               label: const Text('Take photo'),
               onPressed: () => _pick(sheetContext, ref, categoryId,
                   controller.text,
-                  fromCamera: true, toMorePage: toMore.value),
+                  fromCamera: true),
             ),
           ),
           const SizedBox(width: 12),
@@ -60,18 +42,18 @@ void showAddCardSheet(BuildContext context, WidgetRef ref, String categoryId) {
               label: const Text('Choose photo'),
               onPressed: () => _pick(sheetContext, ref, categoryId,
                   controller.text,
-                  fromCamera: false, toMorePage: toMore.value),
+                  fromCamera: false),
             ),
           ),
         ]),
       ]),
     ),
-  ).whenComplete(toMore.dispose);
+  );
 }
 
 Future<void> _pick(BuildContext sheetContext, WidgetRef ref, String categoryId,
     String label,
-    {required bool fromCamera, required bool toMorePage}) async {
+    {required bool fromCamera}) async {
   final trimmed = label.trim();
   if (trimmed.isEmpty) return;
   final path = await ref.read(photoPickerProvider).pickPhoto(
@@ -81,11 +63,7 @@ Future<void> _pick(BuildContext sheetContext, WidgetRef ref, String categoryId,
   await ref.read(boardNotifierProvider.notifier).addCustomCard(
       categoryId: categoryId,
       label: trimmed,
-      photoPath: path,
-      toMorePage: toMorePage);
+      photoPath: path);
   ref.read(telemetryProvider).log(ParentEvent.customCardAdded);
-  if (toMorePage) {
-    ref.read(telemetryProvider).log(ParentEvent.morePageConfigured);
-  }
   if (sheetContext.mounted) Navigator.of(sheetContext).pop();
 }

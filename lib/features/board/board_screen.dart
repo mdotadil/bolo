@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../theme.dart';
 import '../parent/hold_to_open.dart';
 import '../parent/parent_screen.dart';
 import 'board_providers.dart';
 import 'card_tile.dart';
-import 'more_page.dart';
 
 class BoardScreen extends ConsumerWidget {
   const BoardScreen({super.key});
@@ -26,7 +24,6 @@ class BoardScreen extends ConsumerWidget {
             final category = board.categories[selected];
             final cards =
                 category.cards.where((c) => !c.hidden).toList(growable: false);
-            final hasMore = category.moreCards.any((c) => !c.hidden);
             return Column(children: [
               Align(
                 alignment: AlignmentDirectional.topEnd,
@@ -44,23 +41,14 @@ class BoardScreen extends ConsumerWidget {
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
                   ),
-                  itemCount: cards.length + (hasMore ? 1 : 0),
-                  itemBuilder: (context, i) {
-                    if (i == cards.length) {
-                      return _MoreTile(
-                          language: board.activeLanguage,
-                          onTap: () => Navigator.of(context).push(
-                              zeroDurationRoute(
-                                  MorePage(categoryIndex: selected))));
-                    }
-                    return CardTile(
-                      card: cards[i],
-                      language: board.activeLanguage,
-                      onTap: () => ref
-                          .read(boardNotifierProvider.notifier)
-                          .speakAndCount(cards[i]),
-                    );
-                  },
+                  itemCount: cards.length,
+                  itemBuilder: (context, i) => CardTile(
+                    card: cards[i],
+                    language: board.activeLanguage,
+                    onTap: () => ref
+                        .read(boardNotifierProvider.notifier)
+                        .speakAndCount(cards[i]),
+                  ),
                 ),
               ),
               _CategoryTabs(
@@ -126,48 +114,6 @@ class _CategoryTabs extends StatelessWidget {
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _MoreTile extends StatelessWidget {
-  const _MoreTile({required this.language, required this.onTap});
-  final String language;
-  final VoidCallback onTap;
-
-  // One entry per supportedLanguages member (fixed chrome, not board data).
-  static const _label = {
-    'en': 'More…',
-    'ur': 'مزید…',
-    'ar': 'المزيد…',
-    'fr': 'Plus…',
-    'es': 'Más…',
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      key: const ValueKey('more-tile'),
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: BoloTheme.card,
-          border: Border.all(color: BoloTheme.cardBorder, width: 2),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        padding: const EdgeInsetsDirectional.all(12),
-        child: Column(children: [
-          Expanded(child: SvgPicture.asset('assets/symbols/more-dots.svg')),
-          const SizedBox(height: 8),
-          Text(_label[language] ?? _label['en']!,
-              style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: BoloTheme.text),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis),
-        ]),
       ),
     );
   }

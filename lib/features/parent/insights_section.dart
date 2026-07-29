@@ -132,7 +132,7 @@ class _InsightsSectionState extends ConsumerState<InsightsSection> {
 
   Map<String, String> _labelIndex(Board board) => {
         for (final cat in board.categories)
-          for (final card in [...cat.cards, ...cat.moreCards])
+          for (final card in cat.cards)
             card.id: card.labels[board.activeLanguage] ??
                 card.labels['en'] ??
                 card.id
