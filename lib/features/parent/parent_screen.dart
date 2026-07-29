@@ -10,6 +10,7 @@ import '../../models/board.dart';
 import '../../services/app_channel.dart';
 import '../../services/backup_service.dart';
 import '../../services/settings_store.dart';
+import '../../services/telemetry_service.dart';
 import '../board/board_providers.dart';
 import 'add_card_sheet.dart';
 import 'insights_section.dart';
@@ -85,6 +86,9 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                       ref
                           .read(boardNotifierProvider.notifier)
                           .setActiveLanguage(lang);
+                      ref.read(telemetryProvider).log(
+                          ParentEvent.languageChanged,
+                          params: {'language': lang});
                     },
                   ),
                 ]),
@@ -147,9 +151,15 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                   case ReorderAction.moveToMore:
                     n.moveCardToPage(category.id,
                         category.cards[from].id, toMore: true);
+                    ref
+                        .read(telemetryProvider)
+                        .log(ParentEvent.morePageConfigured);
                   case ReorderAction.moveToMain:
                     n.moveCardToPage(category.id,
                         category.moreCards[from].id, toMore: false);
+                    ref
+                        .read(telemetryProvider)
+                        .log(ParentEvent.morePageConfigured);
                   case ReorderAction.none:
                     break;
                 }
@@ -213,6 +223,7 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                           await BackupService(docs).createBackup();
                       await SharePlus.instance.share(
                           ShareParams(files: [XFile(file.path)]));
+                      ref.read(telemetryProvider).log(ParentEvent.backupCreated);
                     },
                   ),
                 ),
@@ -319,6 +330,7 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
       await BackupService(ref.read(docsDirProvider))
           .restore(File(picked.path));
       ref.invalidate(boardNotifierProvider); // reload from disk
+      ref.read(telemetryProvider).log(ParentEvent.backupRestored);
     } on FormatException catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context)

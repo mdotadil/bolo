@@ -1,17 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/board.dart';
+import '../../services/telemetry_service.dart';
 import '../../services/usage_store.dart';
 import '../../theme.dart';
 import '../board/board_providers.dart';
 
 /// On-device usage insights. Everything is computed from usage.json locally;
 /// nothing ever leaves the phone.
-class InsightsSection extends ConsumerWidget {
+class InsightsSection extends ConsumerStatefulWidget {
   const InsightsSection({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InsightsSection> createState() => _InsightsSectionState();
+}
+
+class _InsightsSectionState extends ConsumerState<InsightsSection> {
+  @override
+  void initState() {
+    super.initState();
+    // Insights shown to the parent — once per mount, no-op in sideload.
+    ref.read(telemetryProvider).log(ParentEvent.insightsViewed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final boardAsync = ref.watch(boardNotifierProvider);
     return boardAsync.maybeWhen(
       orElse: () => const SizedBox.shrink(),

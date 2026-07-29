@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/board.dart';
 import '../../services/audio_recorder.dart';
 import '../../services/recording_player.dart';
+import '../../services/telemetry_service.dart';
 import '../board/board_providers.dart';
 
 /// Parent-facing display names, one entry per supportedLanguages member.
@@ -141,6 +142,8 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
     }
     await ref.read(boardNotifierProvider.notifier).setRecording(
         widget.card.id, lang, 'recordings/${widget.card.id}_$lang.m4a');
+    ref.read(telemetryProvider).log(ParentEvent.recordingCreated,
+        params: {'language': lang});
   }
 
   Future<void> _play(String lang) async {

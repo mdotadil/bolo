@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/telemetry_service.dart';
 import '../board/board_providers.dart';
 import 'photo_picker.dart';
 
@@ -82,5 +83,9 @@ Future<void> _pick(BuildContext sheetContext, WidgetRef ref, String categoryId,
       label: trimmed,
       photoPath: path,
       toMorePage: toMorePage);
+  ref.read(telemetryProvider).log(ParentEvent.customCardAdded);
+  if (toMorePage) {
+    ref.read(telemetryProvider).log(ParentEvent.morePageConfigured);
+  }
   if (sheetContext.mounted) Navigator.of(sheetContext).pop();
 }
