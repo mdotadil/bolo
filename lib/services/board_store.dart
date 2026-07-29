@@ -2,6 +2,30 @@ import 'dart:convert';
 import 'dart:io';
 import '../models/board.dart';
 
+/// Folds each category's on-disk `moreCards` (from the removed More-page
+/// feature) into `cards`, appending at the end and preserving order, then
+/// drops the `moreCards` key from that category. Returns the folded category
+/// maps (does not touch anything else in [rawBoard]).
+///
+/// Shared by [BoardStore]'s v1/v2 -> v3 migration and by
+/// `BackupService.restore` when importing an older `.bolo` archive: the
+/// current `Board.fromJson` no longer knows the `moreCards` key (removed
+/// alongside `BoardCategory.moreCards`), so any caller that hands raw board
+/// JSON to `Board.fromJson` without this fold first would silently drop
+/// every More-page card -- including custom photo cards and cards with
+/// recordings.
+List<Map<String, dynamic>> foldMoreCards(Map<String, dynamic> rawBoard) {
+  final rawCats = rawBoard['categories'] as List;
+  return rawCats.map((c) {
+    final cat = Map<String, dynamic>.from(c as Map<String, dynamic>);
+    final more = cat.remove('moreCards') as List?;
+    if (more != null && more.isNotEmpty) {
+      cat['cards'] = [...(cat['cards'] as List), ...more];
+    }
+    return cat;
+  }).toList();
+}
+
 class BoardStore {
   BoardStore(this._dir, {required this._loadDefault});
 
@@ -45,16 +69,12 @@ class BoardStore {
   Board _migrate(Map<String, dynamic> raw, Board def) {
     final defCats = {for (final c in def.categories) c.id: c};
     final rawCats = raw['categories'] as List;
-    final hadOwnMoreCards = <String, bool>{};
-    final foldedCats = rawCats.map((c) {
-      final cat = Map<String, dynamic>.from(c as Map<String, dynamic>);
-      final more = cat.remove('moreCards') as List?;
-      hadOwnMoreCards[cat['id'] as String] = more != null && more.isNotEmpty;
-      if (more != null && more.isNotEmpty) {
-        cat['cards'] = [...(cat['cards'] as List), ...more];
-      }
-      return cat;
-    }).toList();
+    final hadOwnMoreCards = {
+      for (final c in rawCats)
+        (c as Map<String, dynamic>)['id'] as String:
+            ((c['moreCards'] as List?)?.isNotEmpty ?? false),
+    };
+    final foldedCats = foldMoreCards(raw);
     final board = Board.fromJson({...raw, 'categories': foldedCats});
 
     return board.copyWith(categories: [

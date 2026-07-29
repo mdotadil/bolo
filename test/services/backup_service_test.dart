@@ -197,6 +197,69 @@ void main() {
   });
 
   test(
+      'restoring a v2-era backup folds moreCards into cards, keeping photo '
+      'and recording cards that would otherwise be silently dropped',
+      () async {
+    // Shape of a real pre-v3 install: a category still carrying its own
+    // on-disk moreCards array, including a custom photo card with a
+    // recording -- exactly what Board.fromJson (v3) no longer knows how to
+    // parse on its own.
+    final v2Docs = Directory.systemTemp.createTempSync('bolo_v2backup');
+    addTearDown(() => v2Docs.deleteSync(recursive: true));
+    Directory('${v2Docs.path}/photos').createSync();
+    Directory('${v2Docs.path}/recordings').createSync();
+    File('${v2Docs.path}/board.json').writeAsStringSync(jsonEncode({
+      'version': 2,
+      'speechRate': 0.45,
+      'activeLanguage': 'en',
+      'categories': [
+        {
+          'id': 'wants',
+          'names': {'en': 'Wants'},
+          'cards': [
+            {'id': 'eat', 'labels': {'en': 'eat'}}
+          ],
+          'moreCards': [
+            {
+              'id': 'custom-more-1',
+              'labels': {'en': 'my blanket'},
+              'photoPath': '${v2Docs.path}/photos/more.jpg',
+              // recordings are stored relative to the docs dir (unlike
+              // photoPath), which is why restore never needs to re-anchor
+              // them -- only the recordings/ directory itself gets copied.
+              'recordings': {'en': 'recordings/more_en.m4a'},
+            }
+          ],
+        }
+      ],
+    }));
+    File('${v2Docs.path}/photos/more.jpg').writeAsStringSync('img2');
+    File('${v2Docs.path}/recordings/more_en.m4a').writeAsStringSync('aud2');
+    final v2Backup = await BackupService(v2Docs).createBackup();
+    addTearDown(() => v2Backup.deleteSync());
+
+    final newDocs = Directory.systemTemp.createTempSync('bolo_v2restore');
+    addTearDown(() => newDocs.deleteSync(recursive: true));
+    await BackupService(newDocs).restore(v2Backup);
+
+    final board = jsonDecode(
+            File('${newDocs.path}/board.json').readAsStringSync())
+        as Map<String, dynamic>;
+    expect(board['version'], 3);
+    final wants = (board['categories'] as List).single as Map<String, dynamic>;
+    expect(wants.containsKey('moreCards'), isFalse);
+    final cards = wants['cards'] as List;
+    expect([for (final c in cards) (c as Map)['id']],
+        ['eat', 'custom-more-1']);
+    final moreCard = cards.last as Map<String, dynamic>;
+    expect(moreCard['photoPath'], '${newDocs.path}/photos/more.jpg');
+    expect(moreCard['recordings'], {'en': 'recordings/more_en.m4a'});
+    expect(File('${newDocs.path}/photos/more.jpg').readAsStringSync(), 'img2');
+    expect(File('${newDocs.path}/recordings/more_en.m4a').readAsStringSync(),
+        'aud2');
+  });
+
+  test(
       'restore fully becomes the backup: usage.json is deleted (not left over) '
       'when the archive has none, matching the photos/recordings wipe',
       () async {

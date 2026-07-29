@@ -8,9 +8,13 @@ Bolo is a talking picture board for kids who don't speak yet, or who only speak 
 
 The picture board, the voice, the pictures you add, the recordings you make, and how many times each card gets tapped all stay on this one phone. None of it is ever uploaded anywhere.
 
-# The one thing that uses the internet
+# How Bolo uses the internet
 
-The only time Bolo connects to the internet at all is right now, while a parent has this page open. It fetches the newest copy of this privacy text, so we can fix or update it without making you download a new app. If there is no internet, or the fetch fails, you still see a policy: a copy saved from last time, or the copy that came built into the app. This page never shows an error.
+If you installed the family build directly, the only time Bolo connects to the internet is right now, while a parent has this page open, to fetch the newest copy of this privacy text. That way we can fix or update it without making you download a new app.
+
+If you got Bolo from Google Play, this page still works the same way, but that build also uses the internet for two more things: crash reports and the parent-mode events listed below, unless a parent turns "Share anonymous diagnostics" off, and purchases, which go through the store.
+
+If there is no internet, or the fetch for this page fails, you still see a policy: a copy saved from last time, or the copy that came built into the app. This page never shows an error.
 
 # If you got Bolo from Google Play
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import '../models/board.dart';
+import 'board_store.dart';
 
 /// Creates and restores `.bolo` backups: a zip of board.json, usage.json,
 /// photos/ and recordings/. Restore is staged: nothing in the live docs dir
@@ -52,7 +53,12 @@ class BackupService {
     }
     final Map<String, dynamic> raw;
     try {
-      raw = jsonDecode(utf8.decode(boardEntry.content)) as Map<String, dynamic>;
+      final decoded =
+          jsonDecode(utf8.decode(boardEntry.content)) as Map<String, dynamic>;
+      // Fold any older-schema `moreCards` (from the removed More-page
+      // feature) into `cards` BEFORE Board.fromJson, which no longer knows
+      // the `moreCards` key and would otherwise silently drop those cards.
+      raw = {...decoded, 'categories': foldMoreCards(decoded)};
     } catch (_) {
       throw const FormatException('Backup board is not readable.');
     }

@@ -18,12 +18,18 @@ const _v1Json =
 // its own moreCards array on disk -- the shape of a real existing install
 // (e.g. board.json on a device that upgraded through v2 before the More
 // page was removed).
+// The `want-eat` moreCards entry also carries a photoPath and a recordings
+// map, the shape of a custom More-page card a parent added their own photo
+// and voice recording to -- these must survive the fold into `cards` too,
+// not just the plain phrase cards.
 const _v2JsonWithMoreCards =
     '{"version":2,"speechRate":0.5,"categories":[{"id":"wants","names":{"en":"Wants"},"cards":['
     '{"id":"eat","labels":{"en":"eat"}},'
     '{"id":"drink","labels":{"en":"drink"}}],'
     '"moreCards":['
-    '{"id":"want-eat","labels":{"en":"I want to eat"}},'
+    '{"id":"want-eat","labels":{"en":"I want to eat"},'
+    '"photoPath":"/old/photos/want-eat.jpg",'
+    '"recordings":{"en":"recordings/want-eat_en.m4a"}},'
     '{"id":"want-water","labels":{"en":"I want water"}}]}]}';
 
 void main() {
@@ -108,6 +114,11 @@ void main() {
     // in on top of them.
     expect([for (final c in wants.cards) c.id],
         ['eat', 'drink', 'want-eat', 'want-water']);
+    // The custom photo + recording on the folded-in moreCards entry survive
+    // the fold too, not just its id and labels.
+    final wantEat = wants.cards.firstWhere((c) => c.id == 'want-eat');
+    expect(wantEat.photoPath, '/old/photos/want-eat.jpg');
+    expect(wantEat.recordings, {'en': 'recordings/want-eat_en.m4a'});
 
     final raw = jsonDecode(File('${tmp.path}/board.json').readAsStringSync())
         as Map<String, dynamic>;
@@ -116,6 +127,10 @@ void main() {
     expect(wantsRaw.containsKey('moreCards'), isFalse);
     expect([for (final c in wantsRaw['cards'] as List) (c as Map)['id']],
         ['eat', 'drink', 'want-eat', 'want-water']);
+    final wantEatRaw = (wantsRaw['cards'] as List)
+        .firstWhere((c) => (c as Map)['id'] == 'want-eat') as Map;
+    expect(wantEatRaw['photoPath'], '/old/photos/want-eat.jpg');
+    expect(wantEatRaw['recordings'], {'en': 'recordings/want-eat_en.m4a'});
   });
 
   test('migration is idempotent', () async {
