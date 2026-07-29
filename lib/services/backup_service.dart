@@ -50,19 +50,45 @@ class BackupService {
     if (boardEntry == null) {
       throw const FormatException('Backup contains no board.');
     }
-    final Board board;
+    final Map<String, dynamic> raw;
     try {
-      board = Board.fromJson(jsonDecode(utf8.decode(boardEntry.content))
-          as Map<String, dynamic>);
+      raw = jsonDecode(utf8.decode(boardEntry.content)) as Map<String, dynamic>;
     } catch (_) {
       throw const FormatException('Backup board is not readable.');
+    }
+    // Reject backups written by a future Bolo version: this build doesn't
+    // know that schema and Board.fromJson would silently drop fields.
+    final v = raw['version'] as int? ?? 1;
+    if (v > Board.currentVersion) {
+      throw const FormatException(
+          'Backup was made by a newer version of Bolo.');
+    }
+    final Board board;
+    try {
+      board = Board.fromJson(raw);
+    } catch (_) {
+      throw const FormatException('Backup board is not readable.');
+    }
+    if (board.categories.isEmpty) {
+      throw const FormatException('Backup board has no categories.');
     }
 
     // Stage everything first; only touch the live dir after full success.
     final staging = Directory.systemTemp.createTempSync('bolo_restore');
     try {
       for (final entry in archive.files.where((f) => f.isFile)) {
-        final out = File('${staging.path}/${entry.name}');
+        final name = entry.name;
+        // Reject zip-slip entries: only the exact backup layout is trusted.
+        final safe = !name.contains('..') &&
+            !name.startsWith('/') &&
+            (name == 'board.json' ||
+                name == 'usage.json' ||
+                name.startsWith('photos/') ||
+                name.startsWith('recordings/'));
+        if (!safe) {
+          throw const FormatException('Not a Bolo backup file.');
+        }
+        final out = File('${staging.path}/$name');
         out.parent.createSync(recursive: true);
         out.writeAsBytesSync(entry.content);
       }

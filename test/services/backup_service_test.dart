@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:bolo/models/board.dart';
 import 'package:bolo/services/backup_service.dart';
 
 /// Decodes [backup], replaces the board.json entry's bytes with invalid
@@ -19,6 +20,26 @@ Future<File> tamperBoardEntry(File backup) async {
   }
   final out = File('${Directory.systemTemp.path}/tampered-${DateTime.now().microsecondsSinceEpoch}.bolo');
   out.writeAsBytesSync(ZipEncoder().encode(tampered));
+  return out;
+}
+
+/// Decodes [backup], replaces the board.json entry with [boardJson], and
+/// re-encodes to a new temp .bolo file.
+Future<File> replaceBoardEntry(
+    File backup, Map<String, dynamic> boardJson) async {
+  final archive = ZipDecoder().decodeBytes(backup.readAsBytesSync());
+  final replaced = Archive();
+  final bytes = utf8.encode(jsonEncode(boardJson));
+  for (final entry in archive.files.where((f) => f.isFile)) {
+    if (entry.name == 'board.json') {
+      replaced.addFile(ArchiveFile('board.json', bytes.length, bytes));
+    } else {
+      replaced.addFile(ArchiveFile(entry.name, entry.size, entry.content));
+    }
+  }
+  final out = File(
+      '${Directory.systemTemp.path}/replaced-${DateTime.now().microsecondsSinceEpoch}.bolo');
+  out.writeAsBytesSync(ZipEncoder().encode(replaced));
   return out;
 }
 
@@ -49,6 +70,11 @@ void main() {
     File('${docs.path}/photos/b.jpg').writeAsStringSync('img');
     File('${docs.path}/recordings/eat_ur.m4a').writeAsStringSync('aud');
     File('${docs.path}/usage.json').writeAsStringSync('{"perCard":{},"perDay":{}}');
+    // Privacy pin: settings.json lives alongside board.json/usage.json in
+    // the docs dir but must never be swept into a .bolo archive — a backup
+    // must not carry consent/entitlement onto another phone.
+    File('${docs.path}/settings.json').writeAsStringSync(
+        jsonEncode({'telemetryEnabled': false, 'supporterUnlocked': false}));
   });
   tearDown(() => docs.deleteSync(recursive: true));
 
@@ -57,6 +83,10 @@ void main() {
     final service = BackupService(docs);
     final backup = await service.createBackup();
     expect(backup.path, endsWith('.bolo'));
+
+    final archive = ZipDecoder().decodeBytes(backup.readAsBytesSync());
+    expect(archive.files.map((f) => f.name),
+        isNot(contains('settings.json')));
 
     // Restore into a FRESH directory (simulates a new phone).
     final newDocs = Directory.systemTemp.createTempSync('bolo_newphone');
@@ -92,6 +122,78 @@ void main() {
     final tampered = await tamperBoardEntry(backup); // helper below
     await expectLater(
         BackupService(docs).restore(tampered), throwsA(isA<FormatException>()));
+  });
+
+  test('backup made by a newer Bolo version is rejected', () async {
+    final service = BackupService(docs);
+    final backup = await service.createBackup();
+    final tooNew = await replaceBoardEntry(backup, {
+      'version': Board.currentVersion + 1,
+      'speechRate': 0.45,
+      'activeLanguage': 'en',
+      'categories': [
+        {
+          'id': 'wants',
+          'names': {'en': 'Wants'},
+          'cards': [
+            {'id': 'eat', 'labels': {'en': 'eat'}}
+          ],
+        }
+      ],
+    });
+    addTearDown(() => tooNew.deleteSync());
+    await expectLater(
+        BackupService(docs).restore(tooNew), throwsA(isA<FormatException>()));
+  });
+
+  test('backup with an empty categories list is rejected', () async {
+    final service = BackupService(docs);
+    final backup = await service.createBackup();
+    final empty = await replaceBoardEntry(backup, {
+      'version': 2,
+      'speechRate': 0.45,
+      'activeLanguage': 'en',
+      'categories': <Map<String, dynamic>>[],
+    });
+    addTearDown(() => empty.deleteSync());
+    await expectLater(
+        BackupService(docs).restore(empty), throwsA(isA<FormatException>()));
+  });
+
+  test('archive entry with a path-traversal name (zip-slip) is rejected',
+      () async {
+    final archive = Archive();
+    final boardBytes = utf8.encode(jsonEncode({
+      'version': 2,
+      'speechRate': 0.45,
+      'activeLanguage': 'en',
+      'categories': [
+        {
+          'id': 'wants',
+          'names': {'en': 'Wants'},
+          'cards': [
+            {'id': 'eat', 'labels': {'en': 'eat'}}
+          ],
+        }
+      ],
+    }));
+    archive.addFile(ArchiveFile('board.json', boardBytes.length, boardBytes));
+    final evilBytes = utf8.encode('pwned');
+    archive
+        .addFile(ArchiveFile('../evil.txt', evilBytes.length, evilBytes));
+    final malicious = File(
+        '${Directory.systemTemp.path}/evil-${DateTime.now().microsecondsSinceEpoch}.bolo')
+      ..writeAsBytesSync(ZipEncoder().encode(archive));
+    addTearDown(() => malicious.deleteSync());
+
+    await expectLater(BackupService(docs).restore(malicious),
+        throwsA(isA<FormatException>()));
+
+    // Nothing escaped staging: neither in the docs dir nor its parent (the
+    // system temp dir the malicious entry's `../` resolves into).
+    expect(File('${docs.path}/evil.txt').existsSync(), isFalse);
+    expect(
+        File('${Directory.systemTemp.path}/evil.txt').existsSync(), isFalse);
   });
 
   test(

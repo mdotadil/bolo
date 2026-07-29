@@ -196,5 +196,22 @@ void main() {
           container.read(settingsProvider).value?.supporterUnlocked, isTrue);
       expect(sentEvents.where((e) => e == 'supporter_restored'), isEmpty);
     });
+
+    test(
+        'cold boot: a persisted telemetry opt-out survives an entitlement '
+        'write even when settingsProvider was never read before the '
+        'purchase arrives', () async {
+      await SettingsStore(tmp).save(const Settings(telemetryEnabled: false));
+      // Deliberately do NOT pre-warm settingsProvider here (no
+      // `container.read(settingsProvider.future)` before start()) — this is
+      // exactly the cold-boot ordering onUnlocked must handle itself.
+      container.read(purchaseServiceProvider).start();
+
+      await emit(purchase(supporterProductId, PurchaseStatus.purchased));
+
+      final onDisk = await SettingsStore(tmp).load();
+      expect(onDisk.telemetryEnabled, isFalse);
+      expect(onDisk.supporterUnlocked, isTrue);
+    });
   });
 }

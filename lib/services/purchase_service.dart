@@ -108,8 +108,15 @@ final purchaseServiceProvider = Provider<PurchaseService>((ref) {
       // re-delivers every non-consumable the account owns even when already
       // unlocked on this phone. The entitlement write below is idempotent and
       // stays unconditional; only the telemetry log must not double-count.
-      final alreadyUnlocked =
-          ref.read(settingsProvider).value?.supporterUnlocked ?? false;
+      //
+      // Await the FUTURE, not a synchronous .value read: on a cold boot (a
+      // purchase can be delivered before anything else has ever read
+      // settingsProvider) .value is null, and falling back to default
+      // Settings() would clobber a persisted telemetryEnabled: false when
+      // setSupporterUnlocked below writes through _settings (state.value ??
+      // const Settings()).
+      final settings = await ref.read(settingsProvider.future);
+      final alreadyUnlocked = settings.supporterUnlocked;
       await ref.read(settingsProvider.notifier).setSupporterUnlocked(true);
       if (alreadyUnlocked) return;
       await ref.read(telemetryProvider).log(restored

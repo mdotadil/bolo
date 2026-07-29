@@ -336,12 +336,21 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
     try {
       await BackupService(ref.read(docsDirProvider))
           .restore(File(picked.path));
-      ref.invalidate(boardNotifierProvider); // reload from disk
       ref.read(telemetryProvider).log(ParentEvent.backupRestored);
     } on FormatException catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Restore failed — your board may be incomplete. '
+              'Try again or restore another backup.')));
+    } finally {
+      // Reload from disk on every post-confirmation attempt — success,
+      // FormatException, or anything else — so the UI never keeps showing
+      // stale in-memory state after a restore that touched disk.
+      ref.invalidate(boardNotifierProvider);
     }
   }
 }
