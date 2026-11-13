@@ -41,6 +41,8 @@ class FakePlayer implements RecordingPlayer {
   @override
   Future<void> play(String p) async => calls.add('play:$p');
   @override
+  Future<void> playAsset(String key) async => calls.add('asset:$key');
+  @override
   Future<void> stop() async => calls.add('stop');
 }
 

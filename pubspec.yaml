@@ -81,6 +81,11 @@ flutter:
     - assets/board/
     - assets/symbols/
     - assets/legal/
+    - assets/voice/en/
+    - assets/voice/ur/
+    - assets/voice/ar/
+    - assets/voice/fr/
+    - assets/voice/es/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

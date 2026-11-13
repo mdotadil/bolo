@@ -1,0 +1,16 @@
+# Smoke: tapping default cards plays audio (bundled natural-voice clip when
+# present, TTS otherwise) without crashing or navigating. Maestro cannot
+# assert sound, so this guards the playback path staying responsive.
+# Run: flutter run (keep it running), then: maestro test .maestro/natural-voice-smoke.yaml
+appId: com.mdotadil.bolo
+---
+- launchApp:
+    clearState: true
+- assertVisible: "eat"
+- tapOn: "eat"          # wants category: bundled clip path
+- assertVisible: "eat"  # still on the board, app responsive
+- tapOn: "more"         # a second card
+- assertVisible: "more"
+- tapOn: "eat"          # immediate re-tap: new clip interrupts the last one
+- tapOn: "more"
+- assertVisible: "eat"
