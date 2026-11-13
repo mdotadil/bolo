@@ -44,14 +44,18 @@ class BoardScreen extends ConsumerWidget {
                   itemCount: cards.length,
                   itemBuilder: (context, i) => CardTile(
                     card: cards[i],
+                    language: board.activeLanguage,
                     onTap: () => ref
-                        .read(speechServiceProvider)
-                        .speakCard(cards[i]),
+                        .read(boardNotifierProvider.notifier)
+                        .speakAndCount(cards[i]),
                   ),
                 ),
               ),
               _CategoryTabs(
-                  names: [for (final c in board.categories) c.names['en'] ?? ''],
+                  names: [
+                    for (final c in board.categories)
+                      c.names[board.activeLanguage] ?? c.names['en'] ?? ''
+                  ],
                   selected: selected,
                   onSelect: (i) =>
                       ref.read(selectedCategoryProvider.notifier).state = i),

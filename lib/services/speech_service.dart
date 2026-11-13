@@ -1,12 +1,15 @@
 import 'dart:io';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../models/board.dart';
+import 'recording_player.dart';
 
 abstract class Tts {
   Future<void> init();
   Future<void> setSpeechRate(double rate);
   Future<void> stop();
   Future<void> speak(String text);
+  Future<void> setLanguage(String tag);
+  Future<bool> isLanguageAvailable(String tag);
 }
 
 /// Production adapter. The iOS audio category is the load-bearing part:
@@ -34,25 +37,79 @@ class FlutterTtsAdapter implements Tts {
   Future<void> stop() => _tts.stop();
   @override
   Future<void> speak(String text) => _tts.speak(text);
+  @override
+  Future<void> setLanguage(String tag) => _tts.setLanguage(tag);
+  @override
+  Future<bool> isLanguageAvailable(String tag) async =>
+      (await _tts.isLanguageAvailable(tag)) == true;
 }
 
 class SpeechService {
-  SpeechService(this._tts);
+  SpeechService(this._tts, this._player, {required this._docsDir});
+
+  /// One entry per supportedLanguages member (kept in the same order).
+  static const _ttsTag = {
+    'en': 'en-US',
+    'ur': 'ur-PK',
+    'ar': 'ar-SA',
+    'fr': 'fr-FR',
+    'es': 'es-ES',
+  };
+
   final Tts _tts;
+  final RecordingPlayer _player;
+  final Directory _docsDir;
   bool _initialized = false;
 
-  Future<void> configure({required double rate}) async {
+  Future<void> configure({required double rate, String language = 'en'}) async {
     if (!_initialized) {
       await _tts.init();
       _initialized = true;
     }
     await _tts.setSpeechRate(rate);
+    await _tts.setLanguage(_ttsTag[language] ?? 'en-US');
   }
 
-  Future<void> speakCard(SymbolCard card) async {
-    final text = card.labels['en'];
-    if (text == null || text.isEmpty) return;
-    await _tts.stop(); // new tap always interrupts; speech never queues
+  /// Whether the device has a TTS voice for [language] (a supportedLanguages
+  /// code). Drives the parent-mode "voice not available" note.
+  Future<bool> languageAvailable(String language) =>
+      _tts.isLanguageAvailable(_ttsTag[language] ?? 'en-US');
+
+  /// New speech always interrupts everything; nothing queues.
+  Future<void> stopAll() async {
+    await _player.stop();
+    await _tts.stop();
+  }
+
+  Future<void> speakCard(SymbolCard card, {required String language}) async {
+    final relative = card.recordings[language];
+    if (relative != null) {
+      final file = File('${_docsDir.path}/$relative');
+      if (file.existsSync()) {
+        await stopAll();
+        await _player.play(file.path);
+        return;
+      }
+    }
+    final label = card.labels[language];
+    if (label != null && label.isNotEmpty) {
+      await _speak(label, language);
+      return;
+    }
+    final en = card.labels['en'];
+    if (en == null || en.isEmpty) return; // calm silence, never an error
+    await _speak(en, 'en');
+  }
+
+  Future<void> speakText(String text, {required String language}) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    await _speak(trimmed, language);
+  }
+
+  Future<void> _speak(String text, String language) async {
+    await stopAll();
+    await _tts.setLanguage(_ttsTag[language] ?? 'en-US');
     await _tts.speak(text);
   }
 }

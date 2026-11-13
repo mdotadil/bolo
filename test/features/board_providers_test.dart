@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bolo/features/board/board_providers.dart';
 import 'package:bolo/models/board.dart';
 import 'package:bolo/services/board_store.dart';
+import 'package:bolo/services/recording_player.dart';
 import 'package:bolo/services/speech_service.dart';
+import '../support/fakes.dart';
 
 const _defaultJson =
     '{"speechRate":0.45,"categories":[{"id":"wants","names":{"en":"Wants"},"cards":['
@@ -16,18 +18,6 @@ const _threeCardJson =
     '{"id":"a","labels":{"en":"a"},"symbolAsset":"assets/symbols/eat.svg"},'
     '{"id":"b","labels":{"en":"b"},"symbolAsset":"assets/symbols/drink.svg"},'
     '{"id":"c","labels":{"en":"c"},"symbolAsset":"assets/symbols/drink.svg"}]}]}';
-
-class FakeTts implements Tts {
-  final calls = <String>[];
-  @override
-  Future<void> init() async => calls.add('init');
-  @override
-  Future<void> setSpeechRate(double rate) async => calls.add('rate:$rate');
-  @override
-  Future<void> stop() async => calls.add('stop');
-  @override
-  Future<void> speak(String text) async => calls.add('speak:$text');
-}
 
 /// Simulates a platform TTS channel that has no engine/voice installed.
 class ThrowingTts implements Tts {
@@ -41,20 +31,29 @@ class ThrowingTts implements Tts {
   @override
   Future<void> speak(String text) async =>
       throw StateError('no TTS engine available');
+  @override
+  Future<void> setLanguage(String tag) async =>
+      throw StateError('no TTS engine available');
+  @override
+  Future<bool> isLanguageAvailable(String tag) async =>
+      throw StateError('no TTS engine available');
 }
 
 void main() {
   late Directory tmp;
   late ProviderContainer container;
   late FakeTts tts;
+  late BoardStore store;
 
   setUp(() {
     tmp = Directory.systemTemp.createTempSync('bolo_prov');
     tts = FakeTts();
+    store = BoardStore(tmp, loadDefault: () async => _defaultJson);
     container = ProviderContainer(overrides: [
-      boardStoreProvider.overrideWithValue(
-          BoardStore(tmp, loadDefault: () async => _defaultJson)),
+      boardStoreProvider.overrideWithValue(store),
       ttsProvider.overrideWithValue(tts),
+      recordingPlayerProvider.overrideWithValue(FakePlayer()),
+      docsDirProvider.overrideWithValue(tmp),
     ]);
   });
   tearDown(() {
@@ -65,7 +64,7 @@ void main() {
   test('build loads board and configures speech with its rate', () async {
     final board = await container.read(boardNotifierProvider.future);
     expect(board.categories.single.cards.length, 2);
-    expect(tts.calls, ['init', 'rate:0.45']);
+    expect(tts.calls, ['init', 'rate:0.45', 'lang:en-US']);
   });
 
   test('toggleHidden flips the flag and persists', () async {
@@ -93,6 +92,8 @@ void main() {
       boardStoreProvider.overrideWithValue(
           BoardStore(tmp, loadDefault: () async => _threeCardJson)),
       ttsProvider.overrideWithValue(tts),
+      recordingPlayerProvider.overrideWithValue(FakePlayer()),
+      docsDirProvider.overrideWithValue(tmp),
     ]);
     await threeContainer.read(boardNotifierProvider.future);
     // Starting with [a, b, c], move c up to position 0
@@ -108,6 +109,8 @@ void main() {
       boardStoreProvider.overrideWithValue(
           BoardStore(tmp, loadDefault: () async => _threeCardJson)),
       ttsProvider.overrideWithValue(tts),
+      recordingPlayerProvider.overrideWithValue(FakePlayer()),
+      docsDirProvider.overrideWithValue(tmp),
     ]);
     await threeContainer.read(boardNotifierProvider.future);
     // Starting with [a, b, c], move a down to the end → newIndex=2 (end of list after removal)
@@ -133,7 +136,7 @@ void main() {
     await container.read(boardNotifierProvider.future);
     await container.read(boardNotifierProvider.notifier).setSpeechRate(0.6);
     expect(container.read(boardNotifierProvider).value!.speechRate, 0.6);
-    expect(tts.calls.last, 'rate:0.6');
+    expect(tts.calls, containsAllInOrder(['rate:0.6', 'lang:en-US']));
   });
 
   test('build still returns the board when TTS init throws', () async {
@@ -141,11 +144,62 @@ void main() {
       boardStoreProvider.overrideWithValue(
           BoardStore(tmp, loadDefault: () async => _defaultJson)),
       ttsProvider.overrideWithValue(ThrowingTts()),
+      recordingPlayerProvider.overrideWithValue(FakePlayer()),
+      docsDirProvider.overrideWithValue(tmp),
     ]);
     final board = await throwingContainer.read(boardNotifierProvider.future);
     expect(board.categories.single.cards.length, 2);
     expect(
         throwingContainer.read(boardNotifierProvider), isA<AsyncData<Board>>());
     throwingContainer.dispose();
+  });
+
+  test('setActiveLanguage persists and reconfigures speech', () async {
+    final n = container.read(boardNotifierProvider.notifier);
+    await container.read(boardNotifierProvider.future);
+    tts.calls.clear();
+    await n.setActiveLanguage('ur');
+    expect(container.read(boardNotifierProvider).value!.activeLanguage, 'ur');
+    expect(tts.calls, contains('lang:ur-PK'));
+    final reloaded = await store.load();
+    expect(reloaded.activeLanguage, 'ur');
+  });
+
+  test('setRecording/removeRecording reach any card in the category', () async {
+    final n = container.read(boardNotifierProvider.notifier);
+    await container.read(boardNotifierProvider.future);
+    await n.setRecording('eat', 'ur', 'recordings/eat_ur.m4a');
+    await n.setRecording('drink', 'en', 'recordings/drink_en.m4a');
+    var board = container.read(boardNotifierProvider).value!;
+    expect(board.categories.first.cards.firstWhere((c) => c.id == 'eat')
+        .recordings['ur'], 'recordings/eat_ur.m4a');
+    expect(board.categories.first.cards.firstWhere((c) => c.id == 'drink')
+        .recordings['en'], 'recordings/drink_en.m4a');
+    await n.removeRecording('eat', 'ur');
+    board = container.read(boardNotifierProvider).value!;
+    expect(board.categories.first.cards.firstWhere((c) => c.id == 'eat')
+        .recordings, isEmpty);
+  });
+
+  test('setCustomLabels updates both languages', () async {
+    final n = container.read(boardNotifierProvider.notifier);
+    await container.read(boardNotifierProvider.future);
+    await n.setCustomLabels('eat', ur: 'کھانا کھانا');
+    final board = container.read(boardNotifierProvider).value!;
+    final eat = board.categories.first.cards.firstWhere((c) => c.id == 'eat');
+    expect(eat.labels['ur'], 'کھانا کھانا');
+    expect(eat.labels['en'], 'eat'); // untouched
+  });
+
+  test('speakAndCount speaks and buffers a usage tap', () async {
+    final n = container.read(boardNotifierProvider.notifier);
+    await container.read(boardNotifierProvider.future);
+    final eat = container.read(boardNotifierProvider).value!
+        .categories.first.cards.firstWhere((c) => c.id == 'eat');
+    await n.speakAndCount(eat);
+    expect(tts.calls.any((c) => c.startsWith('speak:')), isTrue);
+    final usage = container.read(usageStoreProvider);
+    await usage.flush();
+    expect((await usage.load()).perCard['eat']!.count, 1);
   });
 }

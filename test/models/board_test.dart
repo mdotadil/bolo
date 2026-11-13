@@ -35,4 +35,51 @@ void main() {
     expect(tooHigh.speechRate, 0.7);
     expect(tooLow.speechRate, 0.3);
   });
+
+  test('v2 fields round-trip through json', () {
+    const card = SymbolCard(
+        id: 'eat',
+        labels: {'en': 'eat', 'ur': 'کھانا'},
+        recordings: {'ur': 'recordings/eat_ur.m4a'});
+    const cat = BoardCategory(
+        id: 'wants',
+        names: {'en': 'Wants'},
+        cards: [card]);
+    const board = Board(
+        speechRate: 0.45,
+        categories: [cat],
+        activeLanguage: 'ur');
+
+    final decoded = Board.fromJson(board.toJson());
+    expect(decoded.version, 3);
+    expect(decoded.activeLanguage, 'ur');
+    expect(decoded.categories.single.cards.single.recordings['ur'],
+        'recordings/eat_ur.m4a');
+  });
+
+  test('v2 fields default when absent from json (v1 files)', () {
+    final board = Board.fromJson({
+      'speechRate': 0.45,
+      'categories': [
+        {'id': 'wants', 'names': {'en': 'Wants'}, 'cards': [
+          {'id': 'eat', 'labels': {'en': 'eat'}}
+        ]}
+      ]
+    });
+    expect(board.version, 3); // fromJson always normalizes to current version
+    expect(board.activeLanguage, 'en');
+    expect(board.categories.single.cards.single.recordings, isEmpty);
+  });
+
+  test('copyWith supports new fields', () {
+    const card = SymbolCard(id: 'x', labels: {'en': 'x'});
+    expect(card.copyWith(recordings: {'en': 'r.m4a'}).recordings['en'], 'r.m4a');
+    expect(card.copyWith(labels: {'en': 'y'}).labels['en'], 'y');
+    const board = Board(speechRate: 0.4, categories: []);
+    expect(board.copyWith(activeLanguage: 'ur').activeLanguage, 'ur');
+  });
+
+  test('supportedLanguages is the closed five-language list, in UI order', () {
+    expect(supportedLanguages, ['en', 'ur', 'ar', 'fr', 'es']);
+  });
 }

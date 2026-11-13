@@ -1,42 +1,48 @@
 {
+  "version": 3,
   "speechRate": 0.45,
+  "activeLanguage": "en",
   "categories": [
-    {"id": "wants", "names": {"en": "Wants"}, "cards": [
-      {"id": "eat", "labels": {"en": "eat"}, "symbolAsset": "assets/symbols/eat.svg"},
-      {"id": "drink", "labels": {"en": "drink"}, "symbolAsset": "assets/symbols/drink.svg"},
-      {"id": "water", "labels": {"en": "water"}, "symbolAsset": "assets/symbols/water.svg"},
-      {"id": "snack", "labels": {"en": "snack"}, "symbolAsset": "assets/symbols/snack.svg"},
-      {"id": "more", "labels": {"en": "more"}, "symbolAsset": "assets/symbols/more.svg"},
-      {"id": "all-done", "labels": {"en": "all done"}, "symbolAsset": "assets/symbols/all-done.svg"}
+    {"id": "wants", "names": {"en": "Wants", "ur": "خواہش", "ar": "الرغبات", "fr": "Envies", "es": "Deseos"}, "cards": [
+      {"id": "eat", "labels": {"en": "eat", "ur": "کھانا", "ar": "أكل", "fr": "manger", "es": "comer"}, "symbolAsset": "assets/symbols/eat.svg"},
+      {"id": "drink", "labels": {"en": "drink", "ur": "پینا", "ar": "شرب", "fr": "boire", "es": "beber"}, "symbolAsset": "assets/symbols/drink.svg"},
+      {"id": "water", "labels": {"en": "water", "ur": "پانی", "ar": "ماء", "fr": "eau", "es": "agua"}, "symbolAsset": "assets/symbols/water.svg"},
+      {"id": "snack", "labels": {"en": "snack", "ur": "سنیک", "ar": "سناك", "fr": "goûter", "es": "merienda"}, "symbolAsset": "assets/symbols/snack.svg"},
+      {"id": "more", "labels": {"en": "more", "ur": "اور", "ar": "المزيد", "fr": "encore", "es": "más"}, "symbolAsset": "assets/symbols/more.svg"},
+      {"id": "all-done", "labels": {"en": "all done", "ur": "ہو گیا", "ar": "انتهيت", "fr": "fini", "es": "listo"}, "symbolAsset": "assets/symbols/all-done.svg"},
+      {"id": "want-eat", "labels": {"en": "I want to eat", "ur": "مجھے کھانا چاہیے", "ar": "أريد أن آكل", "fr": "je veux manger", "es": "quiero comer"}, "symbolAsset": "assets/symbols/eat.svg"},
+      {"id": "want-water", "labels": {"en": "I want water", "ur": "مجھے پانی چاہیے", "ar": "أريد ماء", "fr": "je veux de l'eau", "es": "quiero agua"}, "symbolAsset": "assets/symbols/water.svg"}
     ]},
-    {"id": "body", "names": {"en": "Body"}, "cards": [
-      {"id": "toilet", "labels": {"en": "toilet"}, "symbolAsset": "assets/symbols/toilet.svg"},
-      {"id": "wash-hands", "labels": {"en": "wash hands"}, "symbolAsset": "assets/symbols/wash-hands.svg"},
-      {"id": "hurts", "labels": {"en": "it hurts"}, "symbolAsset": "assets/symbols/hurts.svg"},
-      {"id": "tired", "labels": {"en": "tired"}, "symbolAsset": "assets/symbols/tired.svg"},
-      {"id": "sick", "labels": {"en": "I feel sick"}, "symbolAsset": "assets/symbols/sick.svg"}
+    {"id": "body", "names": {"en": "Body", "ur": "جسم", "ar": "الجسم", "fr": "Corps", "es": "Cuerpo"}, "cards": [
+      {"id": "toilet", "labels": {"en": "toilet", "ur": "ٹوائلٹ", "ar": "الحمام", "fr": "toilettes", "es": "baño"}, "symbolAsset": "assets/symbols/toilet.svg"},
+      {"id": "wash-hands", "labels": {"en": "wash hands", "ur": "ہاتھ دھونا", "ar": "غسل اليدين", "fr": "laver les mains", "es": "lavar las manos"}, "symbolAsset": "assets/symbols/wash-hands.svg"},
+      {"id": "hurts", "labels": {"en": "it hurts", "ur": "درد ہو رہا ہے", "ar": "يؤلمني", "fr": "ça fait mal", "es": "me duele"}, "symbolAsset": "assets/symbols/hurts.svg"},
+      {"id": "tired", "labels": {"en": "tired", "ur": "تھکن ہو رہی ہے", "ar": "تعبان", "fr": "fatigué", "es": "cansado"}, "symbolAsset": "assets/symbols/tired.svg"},
+      {"id": "sick", "labels": {"en": "I feel sick", "ur": "طبیعت خراب ہے", "ar": "أشعر بالمرض", "fr": "je suis malade", "es": "estoy enfermo"}, "symbolAsset": "assets/symbols/sick.svg"}
     ]},
-    {"id": "play", "names": {"en": "Play"}, "cards": [
-      {"id": "play", "labels": {"en": "play"}, "symbolAsset": "assets/symbols/play.svg"},
-      {"id": "outside", "labels": {"en": "outside"}, "symbolAsset": "assets/symbols/outside.svg"},
-      {"id": "ball", "labels": {"en": "ball"}, "symbolAsset": "assets/symbols/ball.svg"},
-      {"id": "book", "labels": {"en": "book"}, "symbolAsset": "assets/symbols/book.svg"},
-      {"id": "music", "labels": {"en": "music"}, "symbolAsset": "assets/symbols/music.svg"},
-      {"id": "tv", "labels": {"en": "TV"}, "symbolAsset": "assets/symbols/tv.svg"},
-      {"id": "bubbles", "labels": {"en": "bubbles"}, "symbolAsset": "assets/symbols/bubbles.svg"}
+    {"id": "play", "names": {"en": "Play", "ur": "کھیل", "ar": "اللعب", "fr": "Jeux", "es": "Juegos"}, "cards": [
+      {"id": "play", "labels": {"en": "play", "ur": "کھیلنا", "ar": "لعب", "fr": "jouer", "es": "jugar"}, "symbolAsset": "assets/symbols/play.svg"},
+      {"id": "outside", "labels": {"en": "outside", "ur": "باہر", "ar": "في الخارج", "fr": "dehors", "es": "afuera"}, "symbolAsset": "assets/symbols/outside.svg"},
+      {"id": "ball", "labels": {"en": "ball", "ur": "گیند", "ar": "كرة", "fr": "ballon", "es": "pelota"}, "symbolAsset": "assets/symbols/ball.svg"},
+      {"id": "book", "labels": {"en": "book", "ur": "کتاب", "ar": "كتاب", "fr": "livre", "es": "libro"}, "symbolAsset": "assets/symbols/book.svg"},
+      {"id": "music", "labels": {"en": "music", "ur": "گانا", "ar": "أغنية", "fr": "musique", "es": "música"}, "symbolAsset": "assets/symbols/music.svg"},
+      {"id": "tv", "labels": {"en": "TV", "ur": "ٹی وی", "ar": "تلفاز", "fr": "télé", "es": "tele"}, "symbolAsset": "assets/symbols/tv.svg"},
+      {"id": "bubbles", "labels": {"en": "bubbles", "ur": "بلبلے", "ar": "فقاعات", "fr": "bulles", "es": "burbujas"}, "symbolAsset": "assets/symbols/bubbles.svg"}
     ]},
-    {"id": "feelings", "names": {"en": "Feelings"}, "cards": [
-      {"id": "happy", "labels": {"en": "happy"}, "symbolAsset": "assets/symbols/happy.svg"},
-      {"id": "sad", "labels": {"en": "sad"}, "symbolAsset": "assets/symbols/sad.svg"},
-      {"id": "angry", "labels": {"en": "angry"}, "symbolAsset": "assets/symbols/angry.svg"},
-      {"id": "scared", "labels": {"en": "scared"}, "symbolAsset": "assets/symbols/scared.svg"},
-      {"id": "love", "labels": {"en": "I love you"}, "symbolAsset": "assets/symbols/love.svg"}
+    {"id": "feelings", "names": {"en": "Feelings", "ur": "احساس", "ar": "المشاعر", "fr": "Émotions", "es": "Sentimientos"}, "cards": [
+      {"id": "happy", "labels": {"en": "happy", "ur": "خوش", "ar": "سعيد", "fr": "content", "es": "feliz"}, "symbolAsset": "assets/symbols/happy.svg"},
+      {"id": "sad", "labels": {"en": "sad", "ur": "اداس", "ar": "حزين", "fr": "triste", "es": "triste"}, "symbolAsset": "assets/symbols/sad.svg"},
+      {"id": "angry", "labels": {"en": "angry", "ur": "غصہ", "ar": "زعلان", "fr": "fâché", "es": "enojado"}, "symbolAsset": "assets/symbols/angry.svg"},
+      {"id": "scared", "labels": {"en": "scared", "ur": "ڈر لگ رہا ہے", "ar": "خائف", "fr": "j'ai peur", "es": "tengo miedo"}, "symbolAsset": "assets/symbols/scared.svg"},
+      {"id": "love", "labels": {"en": "I love you", "ur": "آپ سے پیار ہے", "ar": "أحبك", "fr": "je t'aime", "es": "te quiero"}, "symbolAsset": "assets/symbols/love.svg"}
     ]},
-    {"id": "help", "names": {"en": "Help"}, "cards": [
-      {"id": "help", "labels": {"en": "help me"}, "symbolAsset": "assets/symbols/help.svg"},
-      {"id": "come-here", "labels": {"en": "come here"}, "symbolAsset": "assets/symbols/come-here.svg"},
-      {"id": "hug", "labels": {"en": "hug"}, "symbolAsset": "assets/symbols/hug.svg"},
-      {"id": "stop", "labels": {"en": "stop"}, "symbolAsset": "assets/symbols/stop.svg"}
+    {"id": "help", "names": {"en": "Help", "ur": "مدد", "ar": "المساعدة", "fr": "Aide", "es": "Ayuda"}, "cards": [
+      {"id": "help", "labels": {"en": "help me", "ur": "مدد کریں", "ar": "ساعدني", "fr": "aide-moi", "es": "ayúdame"}, "symbolAsset": "assets/symbols/help.svg"},
+      {"id": "come-here", "labels": {"en": "come here", "ur": "یہاں آئیں", "ar": "تعال هنا", "fr": "viens ici", "es": "ven aquí"}, "symbolAsset": "assets/symbols/come-here.svg"},
+      {"id": "hug", "labels": {"en": "hug", "ur": "جپھی", "ar": "حضن", "fr": "câlin", "es": "abrazo"}, "symbolAsset": "assets/symbols/hug.svg"},
+      {"id": "stop", "labels": {"en": "stop", "ur": "رکو", "ar": "توقف", "fr": "stop", "es": "para"}, "symbolAsset": "assets/symbols/stop.svg"},
+      {"id": "need-toilet", "labels": {"en": "I need the toilet", "ur": "مجھے ٹوائلٹ جانا ہے", "ar": "أحتاج الحمام", "fr": "je dois aller aux toilettes", "es": "necesito ir al baño"}, "symbolAsset": "assets/symbols/toilet.svg"},
+      {"id": "help-fast", "labels": {"en": "help me now", "ur": "جلدی مدد کریں", "ar": "ساعدني بسرعة", "fr": "aide-moi vite", "es": "ayúdame rápido"}, "symbolAsset": "assets/symbols/help.svg"}
     ]}
   ]
 }

@@ -1,0 +1,46 @@
+# Bolo Privacy
+
+Last updated: July 29, 2026
+
+Bolo is a talking picture board for kids who don't speak yet, or who only speak a few words. This page explains, in plain words, what the app does with information on your phone.
+
+# The app works offline
+
+The picture board, the voice, the pictures you add, the recordings you make, and how many times each card gets tapped all stay on this one phone. None of it is ever uploaded anywhere.
+
+# How Bolo uses the internet
+
+If you installed the family build directly, the only time Bolo connects to the internet is right now, while a parent has this page open, to fetch the newest copy of this privacy text. That way we can fix or update it without making you download a new app.
+
+If you got Bolo from Google Play, this page still works the same way, but that build also uses the internet for two more things: crash reports and the parent-mode events listed below, unless a parent turns "Share anonymous diagnostics" off, and purchases, which go through the store.
+
+If there is no internet, or the fetch for this page fails, you still see a policy: a copy saved from last time, or the copy that came built into the app. This page never shows an error.
+
+# If you got Bolo from Google Play
+
+With this version, and only if "Share anonymous diagnostics" is turned on in Parent mode, the app can send:
+
+- Crash reports, so bugs can get fixed. These go through a tool called Firebase Crashlytics.
+- A short list of parent actions: language changed, a card added, a recording made, a backup created, a backup restored, insights viewed, and a purchase made or restored.
+
+That is the whole list. Your child's taps, words, photos, and recordings never get sent, no matter what this setting is. Turn "Share anonymous diagnostics" off in Parent mode at any time, and none of this gets sent anymore.
+
+# If you installed the family build directly
+
+This build never sends crash reports and never sends any usage information at all. Nothing leaves the phone, except the one privacy-page fetch above.
+
+# No accounts, no ads
+
+Bolo does not ask you to make an account and does not show ads.
+
+# Purchases
+
+If you unlock the supporter features, the app store (Google Play or Apple) handles the purchase. We never see your card number or any other payment details.
+
+# Photos and recordings
+
+Photos and voice recordings live only in Bolo's private storage on this phone. If you make a backup file, it only goes where you choose to send it. Bolo never sends it anywhere on its own.
+
+# Questions
+
+Email mdotadil@gmail.com with any questions about this policy.

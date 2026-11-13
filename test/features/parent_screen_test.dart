@@ -4,34 +4,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bolo/features/board/board_providers.dart';
 import 'package:bolo/features/parent/parent_screen.dart';
+import 'package:bolo/features/parent/record_sheet.dart';
+import 'package:bolo/models/board.dart';
 import 'package:bolo/services/board_store.dart';
-import 'package:bolo/services/speech_service.dart';
+import 'package:bolo/services/recording_player.dart';
+import 'package:bolo/services/settings_store.dart';
+import '../support/fakes.dart';
 
 const _json =
     '{"speechRate":0.45,"categories":[{"id":"wants","names":{"en":"Wants"},"cards":['
-    '{"id":"eat","labels":{"en":"eat"}},{"id":"drink","labels":{"en":"drink"}}]}]}';
-
-class FakeTts implements Tts {
-  final calls = <String>[];
-  @override
-  Future<void> init() async => calls.add('init');
-  @override
-  Future<void> setSpeechRate(double rate) async => calls.add('rate:$rate');
-  @override
-  Future<void> stop() async => calls.add('stop');
-  @override
-  Future<void> speak(String text) async => calls.add('speak:$text');
-}
+    '{"id":"eat","labels":{"en":"eat","ur":"کھانا","ar":"أكل"}},{"id":"drink","labels":{"en":"drink"}}]}]}';
 
 void main() {
   late Directory tmp;
-  setUp(() => tmp = Directory.systemTemp.createTempSync('bolo_parent'));
+  late FakeTts tts;
+  setUp(() {
+    tmp = Directory.systemTemp.createTempSync('bolo_parent');
+    tts = FakeTts();
+  });
   tearDown(() => tmp.deleteSync(recursive: true));
 
   Widget app() => ProviderScope(overrides: [
         boardStoreProvider.overrideWithValue(
             BoardStore(tmp, loadDefault: () async => _json)),
-        ttsProvider.overrideWithValue(FakeTts()),
+        ttsProvider.overrideWithValue(tts),
+        recordingPlayerProvider.overrideWithValue(FakePlayer()),
+        docsDirProvider.overrideWithValue(tmp),
+        settingsStoreProvider.overrideWithValue(SettingsStore(tmp)),
       ], child: const MaterialApp(home: ParentScreen()));
 
   testWidgets('lists all cards of the category including hidden toggles',
@@ -108,6 +107,9 @@ void main() {
         boardStoreProvider.overrideWithValue(
             BoardStore(tmp, loadDefault: () async => _json)),
         ttsProvider.overrideWithValue(tts),
+        recordingPlayerProvider.overrideWithValue(FakePlayer()),
+        docsDirProvider.overrideWithValue(tmp),
+        settingsStoreProvider.overrideWithValue(SettingsStore(tmp)),
       ],
       child: const MaterialApp(home: ParentScreen()),
     ));
@@ -130,5 +132,51 @@ void main() {
 
     expect(board!.speechRate, 0.6);
     expect(tts.calls.where((c) => c == 'rate:0.6').length, 1);
+  });
+
+  testWidgets('language dropdown lists all five languages, persists, re-labels',
+      (tester) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('language-switch')));
+    await tester.pumpAndSettle();
+    for (final lang in supportedLanguages) {
+      expect(find.text(languageDisplayNames[lang]!), findsWidgets,
+          reason: 'dropdown missing $lang');
+    }
+    await tester.runAsync(() async {
+      await tester.tap(find.text('العربية').last);
+      await tester.pumpAndSettle();
+    });
+    final ctx = tester.element(find.byType(ParentScreen));
+    final board =
+        ProviderScope.containerOf(ctx).read(boardNotifierProvider).value!;
+    expect(board.activeLanguage, 'ar');
+    expect(find.text('أكل'), findsOneWidget); // eat's ar label from fixture
+  });
+
+  testWidgets('voice-unavailable note appears only when the active voice is missing',
+      (tester) async {
+    tts.unavailable.add('ar-SA'); // FakeTts set from test/support/fakes.dart
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('voice-unavailable-note')), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('language-switch')));
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      await tester.tap(find.text('العربية').last);
+      await tester.pumpAndSettle();
+    });
+    expect(find.byKey(const ValueKey('voice-unavailable-note')), findsOneWidget);
+    expect(find.textContaining('العربية voice not available'), findsOneWidget);
+  });
+
+  testWidgets('all cards are listed flat, in category order', (tester) async {
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    final eatY = tester.getTopLeft(find.byKey(const ValueKey('row-eat'))).dy;
+    final drinkY =
+        tester.getTopLeft(find.byKey(const ValueKey('row-drink'))).dy;
+    expect(eatY, lessThan(drinkY));
   });
 }

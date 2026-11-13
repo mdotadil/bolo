@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/telemetry_service.dart';
 import '../board/board_providers.dart';
 import 'photo_picker.dart';
 
@@ -29,7 +30,8 @@ void showAddCardSheet(BuildContext context, WidgetRef ref, String categoryId) {
               icon: const Icon(Icons.photo_camera_outlined),
               label: const Text('Take photo'),
               onPressed: () => _pick(sheetContext, ref, categoryId,
-                  controller.text, fromCamera: true),
+                  controller.text,
+                  fromCamera: true),
             ),
           ),
           const SizedBox(width: 12),
@@ -39,7 +41,8 @@ void showAddCardSheet(BuildContext context, WidgetRef ref, String categoryId) {
               icon: const Icon(Icons.photo_outlined),
               label: const Text('Choose photo'),
               onPressed: () => _pick(sheetContext, ref, categoryId,
-                  controller.text, fromCamera: false),
+                  controller.text,
+                  fromCamera: false),
             ),
           ),
         ]),
@@ -49,15 +52,18 @@ void showAddCardSheet(BuildContext context, WidgetRef ref, String categoryId) {
 }
 
 Future<void> _pick(BuildContext sheetContext, WidgetRef ref, String categoryId,
-    String label, {required bool fromCamera}) async {
+    String label,
+    {required bool fromCamera}) async {
   final trimmed = label.trim();
   if (trimmed.isEmpty) return;
   final path = await ref.read(photoPickerProvider).pickPhoto(
       fromCamera: fromCamera,
       saveDir: ref.read(boardStoreProvider).photosDir);
   if (path == null) return; // user cancelled the picker
-  await ref
-      .read(boardNotifierProvider.notifier)
-      .addCustomCard(categoryId: categoryId, label: trimmed, photoPath: path);
+  await ref.read(boardNotifierProvider.notifier).addCustomCard(
+      categoryId: categoryId,
+      label: trimmed,
+      photoPath: path);
+  ref.read(telemetryProvider).log(ParentEvent.customCardAdded);
   if (sheetContext.mounted) Navigator.of(sheetContext).pop();
 }

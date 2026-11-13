@@ -28,6 +28,20 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Take a photo to create a new picture card.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Record your voice for a card so the app speaks in your voice.</string>
+	<!-- Child-directed app: auto-collection stays OFF at rest; the store
+	     channel enables Crashlytics/Analytics at boot only from the
+	     persisted consent (settings.json). The sideload channel never
+	     enables them. -->
+	<key>FIREBASE_ANALYTICS_COLLECTION_ENABLED</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS</key>
+	<false/>
+	<key>GOOGLE_ANALYTICS_IDFV_COLLECTION_ENABLED</key>
+	<false/>
+	<key>FirebaseCrashlyticsCollectionEnabled</key>
+	<false/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Choose a photo to create a new picture card.</string>
 	<key>UIApplicationSceneManifest</key>
