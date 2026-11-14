@@ -105,9 +105,10 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
   }
 
   Future<void> _start(String lang) async {
+    // Read providers before any await: `ref` throws once the sheet is closed.
     final recorder = ref.read(recorderProvider);
-    if (!await recorder.hasPermission()) return;
     final docs = ref.read(docsDirProvider);
+    if (!await recorder.hasPermission()) return;
     Directory('${docs.path}/recordings').createSync(recursive: true);
     // Extension MUST stay a valid audio container: on iOS, AVAudioRecorder
     // infers the output container format from the URL's path extension
@@ -147,10 +148,11 @@ class _RecordSheetState extends ConsumerState<_RecordSheet> {
     } catch (_) {
       return; // failed save = no recording; card unchanged
     }
+    // Read telemetry before the await: the sheet may close while saving.
+    final telemetry = ref.read(telemetryProvider);
     await ref.read(boardNotifierProvider.notifier).setRecording(
         widget.card.id, lang, 'recordings/${widget.card.id}_$lang.m4a');
-    ref.read(telemetryProvider).log(ParentEvent.recordingCreated,
-        params: {'language': lang});
+    telemetry.log(ParentEvent.recordingCreated, params: {'language': lang});
   }
 
   Future<void> _play(String lang) async {

@@ -163,12 +163,13 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
                     label: const Text('Backup'),
                     onPressed: () async {
                       final docs = ref.read(docsDirProvider);
+                      final telemetry = ref.read(telemetryProvider);
                       await ref.read(usageStoreProvider).flush();
                       final file =
                           await BackupService(docs).createBackup();
                       await SharePlus.instance.share(
                           ShareParams(files: [XFile(file.path)]));
-                      ref.read(telemetryProvider).log(ParentEvent.backupCreated);
+                      telemetry.log(ParentEvent.backupCreated);
                     },
                   ),
                 ),
@@ -290,10 +291,11 @@ class _ParentScreenState extends ConsumerState<ParentScreen> {
       ),
     );
     if (confirmed != true || !context.mounted) return;
+    final telemetry = ref.read(telemetryProvider);
     try {
       await BackupService(ref.read(docsDirProvider))
           .restore(File(picked.path));
-      ref.read(telemetryProvider).log(ParentEvent.backupRestored);
+      telemetry.log(ParentEvent.backupRestored);
     } on FormatException catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context)
